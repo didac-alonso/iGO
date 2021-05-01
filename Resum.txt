@@ -1,7 +1,4 @@
 buenos dias como estás
-<<<<<<< HEAD
 molt bé :)
-=======
 
 hola 
->>>>>>> main
