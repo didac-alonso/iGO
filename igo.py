@@ -36,11 +36,12 @@ COLOR_CONGESTIONS = ['white', 'green', 'greenyellow',
 def download_graph(place):
     '''Downloads the graph from the given place.
     The returned graph is a Directed Graph from the module networkx'''
-
     graph = ox.graph_from_place(place, network_type='drive', simplify=True)
-    # si en aquesta linia fem ox.plot_graph(graph), si que el dibuixa
-    # ox.plot_graph(graph)
+    # We convert the graph to a Digraph to only have at most one edge for each pair of vertex
     graph = ox.utils_graph.get_digraph(graph, weight='length')
+    # We convert it to a MultiDiGraph (because its the type of Graphs OSmnx uses)
+    graph = nx.MultiDiGraph(graph)
+
     return graph
 
 
@@ -76,10 +77,12 @@ def exists_graph(filename):
     return os.path.isfile(filename)
 
 
-# Dibuixa el graf, no funciona. -------------------------------------------------
 def plot_graph(graph):
-    '''Plots the given graph'''
-    pass
+    '''Plots the given MultiDiGraph graph'''
+    fig, ax = ox.plot.plot_graph(graph)
+    plt.close('all')
+
+    return
 
 
 def plot_highways(highways, image_file, size):
@@ -147,6 +150,10 @@ def main():
     else:
         graph = download_graph(PLACE)
         save_graph(graph, GRAPH_FILENAME)
+
+    plot_graph(graph)
+
+    print("hello")
 
     highways = download_highways(HIGHWAYS_URL)
     plot_highways(highways, 'highways.png', SIZE)
