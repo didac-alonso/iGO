@@ -7,3 +7,26 @@ camins mínims entre parells de punts a la ciutat, tot utilitzant el concepte d'
 generar imatges amb els camins minims que s'han calculat.
 
 Itime:
+
+
+
+
+
+
+
+--------------------------------------------------
+Funcionalitat del mòdul bot:
+
+Ha de donar suport a les comandes següents
+    /start : inicia la conversa
+    /help : explica les comandes que té
+    /author : mostra el nom dels autors
+    /go "desti" : (desti sense cometes) mostra a l'usuari, un mapa per arribar fins al desti peel camí més curt segons el concepte de ispeed.
+    /where : mostra ubicació actual de l'usuari
+
+    per testejar:
+    /pos "lloc": fixa la localització actual de l'usuari al lloc que li diem
+
+
+El bot, ha de començar carregant les dades, a partir d'alla estarà llest per rebre instruccions, quan necessiti un desti, mostrarà la ruta òptima per anar desde
+la posició inicial fins al desti. Quan ho necessiti el bot descarregarà la info sobre el transit per adaptar-se a temps real.
