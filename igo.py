@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import osmnx as ox
 import haversine
 from staticmap import StaticMap, Polygon, Line
-import telegram
 import pandas as pd
 import collections
 import matplotlib.pyplot as plt
