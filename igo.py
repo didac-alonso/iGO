@@ -7,7 +7,9 @@ import osmnx as ox
 import haversine
 import staticmap
 import telegram
+import pandas as pd
 import collections
+import matplotlib.pyplot as plt
 
 # We define the map constants and parameters
 PLACE = 'Barcelona, Catalonia'
@@ -49,6 +51,52 @@ def plot_graph(graph):
     nx.draw_networkx(graph)
     # ox.plot_graph(graph)
 
+def download_highways(url):
+    with urllib.request.urlopen(HIGHWAYS_URL) as response:
+        lines = [l.decode('utf-8') for l in response.readlines()]
+        reader = csv.reader(lines, delimiter=',', quotechar='"')
+    print(reader)
+    next(reader)  # ignore first line with description
+    for line in reader:
+        way_id, description, coordinates = line
+        print(coordinates)
+       
+    # df = pd.read_csv(url, usecols=['Tram' , 'Descripció', 'Coordenades'])
+    # print(df)
+    # print(type(df))
+    #return df
+
+def plot_highways(highways, image_file, size):
+    next(highways)  # ignore first line with description
+    for line in highways:
+        way_id, description, coordinates = line
+        print(way_id, description, coordinates)
+    bcn_map = StaticMap(SIZE,SIZE)
+    # for row in highways.itertuples():
+    #     a, b, c, d
+    #     m.add_line(Line(((13.4, 52.5), (2.3, 48.9)), 'blue', 3))
+        # marker = Line((row.Coordenades), 'red', 6)
+        # m_bcn.add_marker(marker)
+
+    image = m_bcn.render()
+    image.save('markets.png')
+
+
+def download_congestions(url):
+    pass
+
+def plot_congestions(highways, congestions, image_file, size):
+    pass
+
+def build_igraph(graph, highways, congestions):
+    pass
+
+def get_shortest_path_with_ispeeds(igraph, origin, destination):
+    pass
+
+def plot_path(igraph, ipath, size):
+    pass
+
 
 def main():
     if exists_graph(GRAPH_FILENAME):
@@ -57,9 +105,11 @@ def main():
         graph = download_graph(PLACE)
         save_graph(graph, GRAPH_FILENAME)
 
+    highways = download_highways(HIGHWAYS_URL)
+    #plot_highways(highways, 'highways.png', SIZE)
     # aqui comprovem el tipus per si estavem fent alguna cosa malament   
-    print(type(graph))
-    plot_graph(graph)
+    #print(type(graph))
+    # plot_graph(graph)
 
 
 main()
