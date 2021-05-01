@@ -1,4 +1,9 @@
-buenos dias como estás
-molt bé :)
+Funcionalitat del mòdul igo:
 
-hola 
+l'adquisició, l'enmagatzematge i la consulta dels grafs de carrers de la ciutat, dels seus trams, i del trànsit en aquests trams.
+
+camins mínims entre parells de punts a la ciutat, tot utilitzant el concepte d'itime.
+
+generar imatges amb els camins minims que s'han calculat.
+
+Itime:
