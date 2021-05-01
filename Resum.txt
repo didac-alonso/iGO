@@ -8,6 +8,15 @@ generar imatges amb els camins minims que s'han calculat.
 
 Itime:
 
+El bot, ha de començar carregant les dades, a partir d'alla estarà llest per rebre instruccions, quan necessiti un desti, mostrarà la ruta òptima per anar desde
+la posició inicial fins al desti. Quan ho necessiti el bot descarregarà la info sobre el transit per adaptar-se a temps real.
+Velocitat i llargada de cada carrer al graf d'OSMnx:
+Cada aresta del graf de la ciutat té un atribut speed
+que indica la velocitat màxima en aquella aresta i
+un atribut length que indica la seva llargada.
+Per tant, és fàcil deduir el temps necessari per recórrer
+aquella aresta en condicions de circulació òptima.
+
 
 
 
@@ -27,6 +36,3 @@ Ha de donar suport a les comandes següents
     per testejar:
     /pos "lloc": fixa la localització actual de l'usuari al lloc que li diem
 
-
-El bot, ha de començar carregant les dades, a partir d'alla estarà llest per rebre instruccions, quan necessiti un desti, mostrarà la ruta òptima per anar desde
-la posició inicial fins al desti. Quan ho necessiti el bot descarregarà la info sobre el transit per adaptar-se a temps real.
