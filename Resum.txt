@@ -7,3 +7,10 @@ camins mínims entre parells de punts a la ciutat, tot utilitzant el concepte d'
 generar imatges amb els camins minims que s'han calculat.
 
 Itime:
+
+Velocitat i llargada de cada carrer al graf d'OSMnx:
+Cada aresta del graf de la ciutat té un atribut speed
+que indica la velocitat màxima en aquella aresta i
+un atribut length que indica la seva llargada.
+Per tant, és fàcil deduir el temps necessari per recórrer
+aquella aresta en condicions de circulació òptima.

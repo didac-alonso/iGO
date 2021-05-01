@@ -1,3 +1,5 @@
+import collections
+
 PLACE = 'Barcelona, Catalonia'
 GRAPH_FILENAME = 'barcelona.graph'
 SIZE = 800
@@ -31,3 +33,37 @@ def test():
     # get 'intelligent path' between two addresses and plot it into a PNG image
     ipath = get_shortest_path_with_ispeeds(igraph, "Campus Nord", "Sagrada Família")
     plot_path(igraph, ipath, SIZE)
+
+
+# Els grafs d'OSMnx tenen molta informació i triguen molt a carregar.
+# Per aquesta aplicació, demaneu-los per a cotxe i simplificats i elimineu
+# els arcs múltiples. A més, descarregeu-los el primer cop i deseu-los amb Pickle:
+graph = osmnx.graph_from_place(PLACE, network_type='drive', simplify=True)
+graph = osmnx.utils_graph.get_digraph(graph, weight='length')
+with open(GRAPH_FILENAME, 'wb') as file:
+    pickle.dump(graph, file)
+
+
+# A partir d'aquest moment els podreu carregar des del fitxer enlloc de des de la xarxa:
+with open(GRAPH_FILENAME, 'rb') as file:
+    graph = pickle.load(file)
+
+
+# Aquesta és la manera de recórrer tots els nodes i les arestes d'un graf:
+# for each node and its information...
+for node1, info1 in graph.nodes.items():
+    print(node1, info1)
+    # for each adjacent node and its information...
+    for node2, edge in graph.adj[node1].items():
+        print('    ', node2)
+        print('        ', edge)
+
+
+# Aquest fragment de codi us pot ajudar per llegir dades en CSV descarregades d'una web:
+with urllib.request.urlopen(HIGHWAYS_URL) as response:
+    lines = [l.decode('utf-8') for l in response.readlines()]
+    reader = csv.reader(lines, delimiter=',', quotechar='"')
+    next(reader)  # ignore first line with description
+    for line in reader:
+        way_id, description, coordinates = line
+        print(way_id, description, coordinates)
