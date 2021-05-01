@@ -1,2 +1,2 @@
-import igo.py
+import igo
 import telegram

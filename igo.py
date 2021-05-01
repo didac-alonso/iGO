@@ -53,7 +53,7 @@ def download_highways(url):
 def download_congestions(url):
     '''Downloads the information concerning the congestions of the highways
     The method returns a DataFrame'''
-    return pd.read_csv(url, sep='#', names=['Tram', 'Data', 'Congestio_actual', 'Congestio_previ'])
+    return pd.read_csv(url, sep='#', names=['Tram', 'Data', 'Congestio_actual', 'Congestio_prevista'])
 
 
 def save_graph(graph, filename):
