@@ -19,8 +19,10 @@ aquella aresta en condicions de circulació òptima.
 
 
 
+--------------------------------------------------
+Webs
 
-
+https://osmnx.readthedocs.io/en/stable/osmnx.html
 
 
 --------------------------------------------------
@@ -35,4 +37,3 @@ Ha de donar suport a les comandes següents
 
     per testejar:
     /pos "lloc": fixa la localització actual de l'usuari al lloc que li diem
-
