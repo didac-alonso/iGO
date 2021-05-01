@@ -6,7 +6,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import osmnx as ox
 import haversine
-from staticmap import StaticMap, Polygon
+from staticmap import StaticMap, Polygon, Line
 import telegram
 import pandas as pd
 import collections
@@ -21,6 +21,17 @@ GRAPH_FILENAME = 'barcelona.graph'
 SIZE = 800
 HIGHWAYS_URL = 'https://opendata-ajuntament.barcelona.cat/data/dataset/1090983a-1c40-4609-8620-14ad49aae3ab/resource/1d6c814c-70ef-4147-aa16-a49ddb952f72/download/transit_relacio_trams.csv'
 CONGESTIONS_URL = 'https://opendata-ajuntament.barcelona.cat/data/dataset/8319c2b1-4c21-4962-9acd-6db4c5ff1148/resource/2d456eb5-4ea6-4f68-9794-2f3f1a58a933/download'
+COLOR_CONGESTIONS = ['white', 'green', 'greenyellow',
+                     'orange', 'tomato', 'red', 'black']
+
+# Segun tengo entendido, el orden es:
+# 0 --> sense dades
+# 1 --> molt fluid
+# 2 --> fluid
+# 3 --> dens
+# 4 --> molt dens
+# 5 --> congestió
+# 6 --> tallat
 
 
 def download_graph(place):
@@ -32,6 +43,18 @@ def download_graph(place):
     # ox.plot_graph(graph)
     graph = ox.utils_graph.get_digraph(graph, weight='length')
     return graph
+
+
+def download_highways(url):
+    '''Downloads the information concerning the fastest streets of the city
+    The method returns a DataFrame'''
+    return pd.read_csv(url)
+
+
+def download_congestions(url):
+    '''Downloads the information concerning the congestions of the highways
+    The method returns a DataFrame'''
+    return pd.read_csv(url, sep='#', names=['Tram', 'Data', 'Congestio_actual', 'Congestio_previ'])
 
 
 def save_graph(graph, filename):
@@ -54,17 +77,10 @@ def exists_graph(filename):
     return os.path.isfile(filename)
 
 
-# Dibuixa el graf, no funciona.
+# Dibuixa el graf, no funciona. -------------------------------------------------
 def plot_graph(graph):
     '''Plots the given graph'''
     pass
-
-
-def download_highways(url):
-    '''Downloads the information concerning the fastest streets of the city
-    The method returns a DataFrame'''
-    df = pd.read_csv(url, usecols=['Tram', 'Descripció', 'Coordenades'])
-    return df
 
 
 def plot_highways(highways, image_file, size):
@@ -78,19 +94,36 @@ def plot_highways(highways, image_file, size):
     for coordinates in highways['Coordenades']:
         coordinates = list(map(float, coordinates.split(',')))
         coordinates = [[coordinates[i], coordinates[i+1]] for i in range(0, len(coordinates), 2)]
-        pol = Polygon(coordinates, 'blue', 10)
-        bcn_map.add_polygon(pol)
+        pol = Line(coordinates, 'blue', 2)
+        bcn_map.add_line(pol)
 
     image = bcn_map.render()
     image.save(image_file)
 
 
-def download_congestions(url):
-    pass
-
-
 def plot_congestions(highways, congestions, image_file, size):
-    pass
+    '''Input: - highways (DataFrame)
+              - congestions (DataFrame)
+              - image_file (name of the file you want to save the plot)
+              - size of the image (the map or plot)
+
+    Translates the information of highways into a map (the plot) with their congestion
+    Saves the map in the image_file and plots it.
+    '''
+    highways_and_congestions = pd.merge(
+        left=highways, right=congestions, left_on='Tram', right_on='Tram')
+
+    bcn_map = StaticMap(size, size)
+
+    for index, row in highways_and_congestions.iterrows():
+        coordinates = row['Coordenades']
+        coordinates = list(map(float, coordinates.split(',')))
+        coordinates = [[coordinates[i], coordinates[i+1]] for i in range(0, len(coordinates), 2)]
+        pol = Line(coordinates, COLOR_CONGESTIONS[row['Congestio_actual']], 2)
+        bcn_map.add_line(pol)
+
+    image = bcn_map.render()
+    image.save(image_file)
 
 
 def build_igraph(graph, highways, congestions):
@@ -114,11 +147,8 @@ def main():
 
     highways = download_highways(HIGHWAYS_URL)
     plot_highways(highways, 'highways.png', SIZE)
-    # aqui comprovem el tipus per si estavem fent alguna cosa malament
-    # print(type(graph))
-    # plot_graph(graph)
-    print(graph.graph)
-    plot_graph(graph)
+    congestions = download_congestions(CONGESTIONS_URL)
+    plot_congestions(highways, congestions, 'congestions.png', SIZE)
 
 
 main()

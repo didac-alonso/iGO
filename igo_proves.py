@@ -35,20 +35,6 @@ def test():
     plot_path(igraph, ipath, SIZE)
 
 
-# Els grafs d'OSMnx tenen molta informació i triguen molt a carregar.
-# Per aquesta aplicació, demaneu-los per a cotxe i simplificats i elimineu
-# els arcs múltiples. A més, descarregeu-los el primer cop i deseu-los amb Pickle:
-graph = osmnx.graph_from_place(PLACE, network_type='drive', simplify=True)
-graph = osmnx.utils_graph.get_digraph(graph, weight='length')
-with open(GRAPH_FILENAME, 'wb') as file:
-    pickle.dump(graph, file)
-
-
-# A partir d'aquest moment els podreu carregar des del fitxer enlloc de des de la xarxa:
-with open(GRAPH_FILENAME, 'rb') as file:
-    graph = pickle.load(file)
-
-
 # Aquesta és la manera de recórrer tots els nodes i les arestes d'un graf:
 # for each node and its information...
 for node1, info1 in graph.nodes.items():
