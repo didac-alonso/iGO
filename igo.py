@@ -92,13 +92,15 @@ def plot_highways(highways, image_file, size):
     '''
     bcn_map = StaticMap(size, size)
     for coordinates in highways['Coordenades']:
+        # we separate the coordinates and put them in a list
         coordinates = list(map(float, coordinates.split(',')))
-        coordinates = [[coordinates[i], coordinates[i+1]] for i in range(0, len(coordinates), 2)]
-        pol = Line(coordinates, 'blue', 2)
+        coordinates = [[coordinates[i], coordinates[i+1]]
+                       for i in range(0, len(coordinates), 2)]  # we create the nodes that form the section ("tram")
+        pol = Line(coordinates, 'blue', 2)  # we paint the section in the map
         bcn_map.add_line(pol)
 
     image = bcn_map.render()
-    image.save(image_file)
+    image.save(image_file)  # we save the image into our directory
 
 
 def plot_congestions(highways, congestions, image_file, size):
@@ -118,7 +120,9 @@ def plot_congestions(highways, congestions, image_file, size):
     for index, row in highways_and_congestions.iterrows():
         coordinates = row['Coordenades']
         coordinates = list(map(float, coordinates.split(',')))
+        # we create the nodes that form the section ("tram")
         coordinates = [[coordinates[i], coordinates[i+1]] for i in range(0, len(coordinates), 2)]
+        # we paint the section in the map using the color coding for each congestion
         pol = Line(coordinates, COLOR_CONGESTIONS[row['Congestio_actual']], 2)
         bcn_map.add_line(pol)
 
@@ -147,8 +151,12 @@ def main():
 
     highways = download_highways(HIGHWAYS_URL)
     plot_highways(highways, 'highways.png', SIZE)
+
     congestions = download_congestions(CONGESTIONS_URL)
     plot_congestions(highways, congestions, 'congestions.png', SIZE)
 
+    igraph = build_igraph(graph, highways, congestions)
 
-main()
+
+if __name__ == "__main__":
+    main()
