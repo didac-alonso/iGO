@@ -11,6 +11,9 @@ import pandas as pd
 import collections
 import matplotlib.pyplot as plt
 
+Highway = collections.namedtuple('Highway', 'coordinates')  # Tram
+Congestion = collections.namedtuple('Congestion', 'coordinates')
+
 # We define the map constants and parameters
 PLACE = 'Barcelona, Catalonia'
 GRAPH_FILENAME = 'barcelona.graph'
@@ -52,31 +55,29 @@ def plot_graph(graph):
     # ox.plot_graph(graph)
 
 def download_highways(url):
-    with urllib.request.urlopen(HIGHWAYS_URL) as response:
-        lines = [l.decode('utf-8') for l in response.readlines()]
-        reader = csv.reader(lines, delimiter=',', quotechar='"')
-    print(reader)
-    next(reader)  # ignore first line with description
-    for line in reader:
-        way_id, description, coordinates = line
-        print(coordinates)
-       
-    # df = pd.read_csv(url, usecols=['Tram' , 'Descripció', 'Coordenades'])
-    # print(df)
-    # print(type(df))
-    #return df
+    # with urllib.request.urlopen(HIGHWAYS_URL) as response:
+    #     lines = [l.decode('utf-8') for l in response.readlines()]
+    #     reader = csv.reader(lines, delimiter=',', quotechar='"')
+    # print(reader)
+
+    df = pd.read_csv(url, usecols=['Tram' , 'Descripció', 'Coordenades'])
+    print(df)
+    print(type(list(df.Coordenades)))
+    print(list(df.Coordenades))
+    return df
 
 def plot_highways(highways, image_file, size):
-    next(highways)  # ignore first line with description
-    for line in highways:
-        way_id, description, coordinates = line
-        print(way_id, description, coordinates)
+    # next(highways)  # ignore first line with description
+    # for line in highways:
+    #     way_id, description, coordinates = line
+    #     print(way_id, description, coordinates)
     bcn_map = StaticMap(SIZE,SIZE)
-    # for row in highways.itertuples():
-    #     a, b, c, d
-    #     m.add_line(Line(((13.4, 52.5), (2.3, 48.9)), 'blue', 3))
-        # marker = Line((row.Coordenades), 'red', 6)
-        # m_bcn.add_marker(marker)
+    for row in highways.itertuples():
+        #for coordinatehighw
+        bcn_map.polygon()
+        (Line(((13.4, 52.5), (2.3, 48.9)), 'blue', 3))
+        marker = Line((row.Coordenades), 'red', 6)
+        m_bcn.add_marker(marker)
 
     image = m_bcn.render()
     image.save('markets.png')
