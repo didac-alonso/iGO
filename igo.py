@@ -18,10 +18,10 @@ Congestion = collections.namedtuple('Congestion', 'coordinates')
 PLACE = 'Barcelona, Catalonia'
 GRAPH_FILENAME = 'barcelona.graph'
 SIZE = 800
+LINE_SIZE = 2
 HIGHWAYS_URL = 'https://opendata-ajuntament.barcelona.cat/data/dataset/1090983a-1c40-4609-8620-14ad49aae3ab/resource/1d6c814c-70ef-4147-aa16-a49ddb952f72/download/transit_relacio_trams.csv'
 CONGESTIONS_URL = 'https://opendata-ajuntament.barcelona.cat/data/dataset/8319c2b1-4c21-4962-9acd-6db4c5ff1148/resource/2d456eb5-4ea6-4f68-9794-2f3f1a58a933/download'
-COLOR_CONGESTIONS = ['white', 'green', 'greenyellow',
-                     'orange', 'tomato', 'red', 'black']
+COLOR_CONGESTIONS = ['silver', 'aqua', 'lime', 'orange', 'red', 'darkred', 'black']
 
 # Segun tengo entendido, el orden es:
 # 0 --> sense dades
@@ -98,7 +98,7 @@ def plot_highways(highways, image_file, size):
         coordinates = list(map(float, coordinates.split(',')))
         coordinates = [[coordinates[i], coordinates[i+1]]
                        for i in range(0, len(coordinates), 2)]  # we create the nodes that form the section ("tram")
-        pol = Line(coordinates, 'blue', 2)  # we paint the section in the map
+        pol = Line(coordinates, 'blue', LINE_SIZE)  # we paint the section in the map
         bcn_map.add_line(pol)
 
     image = bcn_map.render()
@@ -125,7 +125,7 @@ def plot_congestions(highways, congestions, image_file, size):
         # we create the nodes that form the section ("tram")
         coordinates = [[coordinates[i], coordinates[i+1]] for i in range(0, len(coordinates), 2)]
         # we paint the section in the map using the color coding for each congestion
-        pol = Line(coordinates, COLOR_CONGESTIONS[row['Congestio_actual']], 2)
+        pol = Line(coordinates, COLOR_CONGESTIONS[row['Congestio_actual']], LINE_SIZE)
         bcn_map.add_line(pol)
 
     image = bcn_map.render()
@@ -152,8 +152,6 @@ def main():
         save_graph(graph, GRAPH_FILENAME)
 
     plot_graph(graph)
-
-    print("hello")
 
     highways = download_highways(HIGHWAYS_URL)
     plot_highways(highways, 'highways.png', SIZE)
