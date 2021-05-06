@@ -33,9 +33,9 @@ GRAPH = None
 def start(update, context):
     '''Loads the graph used for the GPS...defineix una funció que saluda i que s'executarà quan el bot rebi el missatge /start'''
     global GRAPH
-    GRAPH = get_graph()
-    plot_graph(GRAPH)
-    print('hello')
+    # GRAPH = get_graph()
+    # plot_graph(GRAPH)
+        print('hello')
     context.bot.send_message(chat_id=update.effective_chat.id, text=START)
     return GRAPH
     
