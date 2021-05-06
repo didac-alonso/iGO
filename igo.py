@@ -17,6 +17,7 @@ Congestion = collections.namedtuple('Congestion', 'coordinates')
 # We define the map constants and parameters
 PLACE = 'Barcelona, Catalonia'
 GRAPH_FILENAME = 'barcelona.graph'
+IGRAPH_FILENAME = 'Ibarcelona.graph'
 SIZE = 800
 LINE_SIZE = 2
 HIGHWAYS_URL = 'https://opendata-ajuntament.barcelona.cat/data/dataset/1090983a-1c40-4609-8620-14ad49aae3ab/resource/1d6c814c-70ef-4147-aa16-a49ddb952f72/download/transit_relacio_trams.csv'
@@ -91,6 +92,20 @@ def get_graph():
         save_graph(graph, GRAPH_FILENAME)
     return graph
 
+def get_igraph():
+    '''Returns the graph of the GPS'''
+    graph = get_graph()
+    highways = download_highways(HIGHWAYS_URL) # és necessari? depen del moment o es pot guardar en un fitxer i ya?
+    congestions = download_congestions(CONGESTIONS_URL)
+    igraph = build_igraph(graph, highways, congestions)
+    return igraph
+
+    
+def build_igraph(graph, highways, congestions):
+    # unico sitio en el que podemos poner el atributo itime porque sino no partimos de cero cada vez.
+    pass
+
+
 
 def download_highways(url):
     '''Downloads the information concerning the fastest streets of the city
@@ -144,10 +159,6 @@ def plot_congestions(highways, congestions, image_file, size):
 
     image = bcn_map.render()
     image.save(image_file)
-
-
-def build_igraph(graph, highways, congestions):
-    pass
 
 
 def get_shortest_path_with_ispeeds(igraph, origin, destination):
