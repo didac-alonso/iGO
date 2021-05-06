@@ -35,7 +35,7 @@ def start(update, context):
     global GRAPH
     # GRAPH = get_graph()
     # plot_graph(GRAPH)
-        print('hello')
+    print('hello')
     context.bot.send_message(chat_id=update.effective_chat.id, text=START)
     return GRAPH
     
