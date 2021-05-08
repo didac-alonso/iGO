@@ -2,11 +2,13 @@ import csv
 import os
 import pickle
 import urllib
+import datetime
 import networkx as nx
+import random
 import matplotlib.pyplot as plt
 import osmnx as ox
 import haversine
-from staticmap import StaticMap, Polygon, Line
+from staticmap import StaticMap, Polygon, Line, CircleMarker, IconMarker
 import pandas as pd
 import collections
 import matplotlib.pyplot as plt
@@ -19,11 +21,13 @@ PLACE = 'Barcelona, Catalonia'
 GRAPH_FILENAME = 'barcelona.graph'
 SIZE = 800
 LINE_SIZE = 2
+INFINITE_TIME = float('inf')    
 HIGHWAYS_URL = 'https://opendata-ajuntament.barcelona.cat/data/dataset/1090983a-1c40-4609-8620-14ad49aae3ab/resource/1d6c814c-70ef-4147-aa16-a49ddb952f72/download/transit_relacio_trams.csv'
 CONGESTIONS_URL = 'https://opendata-ajuntament.barcelona.cat/data/dataset/8319c2b1-4c21-4962-9acd-6db4c5ff1148/resource/2d456eb5-4ea6-4f68-9794-2f3f1a58a933/download'
 COLOR_CONGESTIONS = ['silver', 'aqua', 'lime', 'orange', 'red', 'darkred', 'black']
+TIME_MULTIPLIER = [1.0, 1.0, 1.5, 2, 2.5, 3.0, INFINITE_TIME]
 
-# Segun tengo entendido, el orden es:
+# Según tengo entendido, el orden es:
 # 0 --> sense dades
 # 1 --> molt fluid
 # 2 --> fluid
@@ -88,6 +92,7 @@ def get_graph():
         graph = load_graph(GRAPH_FILENAME)
     else:
         graph = download_graph(PLACE)
+        get_initial_time(graph)
         save_graph(graph, GRAPH_FILENAME)
     return graph
 
@@ -146,26 +151,124 @@ def plot_congestions(highways, congestions, image_file, size):
     image.save(image_file)
 
 
-def build_igraph(graph, highways, congestions):
-    pass
+def get_initial_time(graph):
+    '''Creates a new attribute, itime (in seconds), with the optimal time for each edge'''
+    nx.set_edge_attributes(graph, 0, 'itime')
+    for u,v,attr in graph.edges(data=True):
+        # length is in meters
+        # maxspeed is in km/h
+        # itime is in seconds
+        length = attr['length']
+        try:
+            attr['itime'] = length / float(attr['maxspeed']) * 3.6
+        except: # there are some edges without maxspeed information
+            if length < 500: # street with length smaller than 500 meters.
+                attr['itime'] = length / 10.0 * 3.6
+            elif length < 1000:
+                attr['itime'] = length / 30.0 * 3.6
+            elif length > 1000:
+                attr['itime'] = length / 50.0 * 3.6
 
 
-def get_shortest_path_with_ispeeds(igraph, origin, destination):
-    pass
+def build_igraph(igraph, highways, congestions):
+    '''Returns the igraph, which incorporates the notion of itime'''
+    highways_and_congestions = pd.merge(
+        left=highways, right=congestions, left_on='Tram', right_on='Tram')
+    print("hola")
+    
+    for index, row in highways_and_congestions.iterrows():
+        coordinates = row['Coordenades']
+        coordinates = list(map(float, coordinates.split(',')))
+        # we create the nodes that form the section ("tram")
+        nodes = [(coordinates[i+1], coordinates[i]) for i in range(0, len(coordinates), 2)]
+        # get_nearest_node() takes points as (latitude, longitude) tuples, which is the opposite of what we get from the Ajuntament.
+        
+        node1 = ox.distance.get_nearest_node(igraph, nodes[0]) # nodes[0] is the initial
+        for i in range(1, len(nodes)): # for every edge in the segment of the highway
+            node2 = ox.distance.get_nearest_node(igraph, nodes[i]) # nodes[i+1] is the other extrem of the segment
+            try:
+                route = ox.shortest_path(igraph, node1, node2, weight='length')
+                update_congestions(igraph, route, TIME_MULTIPLIER[row['Congestio_actual']])
+            except nx.NetworkXNoPath:
+                try:
+                    route = ox.shortest_path(igraph, node2, node1, weight='length')
+                    update_congestions(igraph, route, TIME_MULTIPLIER[row['Congestio_actual']])
 
+                except nx.NetworkXNoPath: # there is no path between the nodes, only happens in a few cases
+                    pass
+            node1 = node2
 
-def plot_path(igraph, ipath, size):
-    pass
+    return igraph
+
+def update_congestions(igraph, route, multiplier):
+    '''Given the route from a segment, update the itime of the igraph using the factor multiplier'''
+    for i in range(len(route)-1):
+        # we put 0 as a key because its a MultiDigraph but with at most one edge between two nodes
+        igraph[route[i]][route[i+1]][0]['itime'] *= multiplier
+    
+    return
+
+def get_shortest_path_with_itimes(igraph, origin, destination):
+    '''Given an igraph and an origin and a destination in the format (latitude, longitude), finds the
+    shortest path using the concept of itime'''
+
+    print("shortest path beginning")
+    route_map = StaticMap(SIZE, SIZE)
+    # we convert the (latitude, longitude) format into an ID of a node in the igraph
+    origin = ox.distance.get_nearest_node(igraph, origin)
+    destination = ox.distance.get_nearest_node(igraph, destination)
+    route = ox.shortest_path(igraph, origin, destination, weight='itime')
+    # we convert each node ID of the path into the format (longitude, latitude)
+    coordinates = [[igraph.nodes[node]['x'], igraph.nodes[node]['y']] for node in route]
+
+    line = Line(coordinates, 'blue', 4)
+    route_map.add_line(line)
+    # We mark the beginning/origin of the path
+    route_map.add_marker(CircleMarker(coordinates[0], 'white', 18))
+    route_map.add_marker(CircleMarker(coordinates[0], 'red', 12))
+
+    # We mark the end/destination of the path
+    route_map.add_marker(CircleMarker(coordinates[-1], 'white', 18))
+    route_map.add_marker(CircleMarker(coordinates[-1], 'green', 12))
+
+    image = route_map.render()
+    image_file = "temp%d.png" % random.randint(1000000, 9999999)
+    image.save(image_file)
+
+    # We approximate the duration of the path
+    aprox_time = sum([igraph[route[i]][route[i+1]][0]['itime'] for i in range(len(route)-1)])
+    aprox_time = str(datetime.timedelta(seconds=int(aprox_time)))
+
+    # We approximate the distance of the path
+    distance = sum([igraph[route[i]][route[i+1]][0]['length'] for i in range(len(route)-1)])
+
+    print(aprox_time, round(distance, 2))
+
+    return image_file, aprox_time, round(distance, 2)
 
 
 def main():
     print("hello")
-    graph = get_graph()
-    plot_graph(graph)
-    # highways = download_highways(HIGHWAYS_URL)
+    igraph = get_graph()
+    # a = graph.get_edge_data(8465686548, 2844600654)
+    # print(a)
+    # print(ox.basic_stats(graph))
+    # print(ox.extended_stats(graph)) 
+    # graph.edges
+    highways = download_highways(HIGHWAYS_URL)
+    congestions = download_congestions(CONGESTIONS_URL)
+    # print(graph.nodes[2844600654])
+    # print(a)
+    igraph = build_igraph(igraph, highways, congestions)
+    # a = graph.get_edge_data(8465686548, 2844600654)
+    # route = ox.shortest_path(graph, 8465686548, 2844600654)
+
+    get_shortest_path_with_itimes(igraph, (41.408154, 2.184601), (41.397991, 2.140705))
+    # print(nodes_proj.loc[route])
+    # print(a)
+    # plot_graph(graph)
     # plot_highways(highways, 'highways.png', SIZE)
 
-    # congestions = download_congestions(CONGESTIONS_URL)
     # plot_congestions(highways, congestions, 'congestions.png', SIZE)
 
     # igraph = build_igraph(graph, highways, congestions)
