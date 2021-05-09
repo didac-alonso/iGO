@@ -1,17 +1,12 @@
-import csv
 import os
 import pickle
-import urllib
 import datetime
 import networkx as nx
 import random
-import matplotlib.pyplot as plt
 import osmnx as ox
-import haversine
-from staticmap import StaticMap, Polygon, Line, CircleMarker, IconMarker
+from staticmap import StaticMap, Line, CircleMarker
 import pandas as pd
 import collections
-import matplotlib.pyplot as plt
 
 Highway = collections.namedtuple('Highway', 'coordinates')  # Tram
 Congestion = collections.namedtuple('Congestion', 'coordinates')
@@ -81,12 +76,6 @@ def exists_graph(filename):
     return os.path.isfile(filename)
 
 
-def plot_graph(graph):
-    '''Plots the given MultiDiGraph graph'''
-    fig, ax = ox.plot.plot_graph(graph)
-    return
-
-
 def get_graph():
     '''Returns the graph of the GPS'''
     if not exists_graph(GRAPH_FILENAME):
@@ -105,11 +94,17 @@ def get_igraph(graph):
     return build_igraph(graph, highways, congestions)
 
 
-def download_highways(url):
-    '''Downloads the information concerning the fastest streets of the city
-    The method returns a DataFrame'''
-    df = pd.read_csv(url, usecols=['Tram', 'Descripció', 'Coordenades'])
-    return df
+#def download_highways(url):
+#    '''Downloads the information concerning the fastest streets of the city
+#    The method returns a DataFrame'''
+ #   df = pd.read_csv(url, usecols=['Tram', 'Descripció', 'Coordenades'])
+  #  return df
+
+
+def plot_graph(graph):
+    '''Plots the given MultiDiGraph graph'''
+    fig, ax = ox.plot.plot_graph(graph)
+    return
 
 
 def plot_highways(highways, image_filename, size):

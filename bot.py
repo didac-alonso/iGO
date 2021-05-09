@@ -1,8 +1,7 @@
 from igo import *
 from threading import Timer
-import time
 # importa l'API de Telegram
-from telegram.ext import Updater, CommandHandler, MessageHandler, MessageFilter, Filters, ConversationHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import os
 from datetime import datetime
 
