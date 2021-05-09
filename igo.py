@@ -106,6 +106,7 @@ def get_igraph(graph):
 def plot_graph(graph):
     '''Plots the given MultiDiGraph graph'''
     fig, ax = ox.plot.plot_graph(graph)
+    # osmnx.plot_graph(g, show=False, save=True, filepath='vic.png')
     return
 
 
@@ -193,11 +194,11 @@ def build_igraph(graph, highways, congestions):
             # nodes[i+1] is the other extrem of the segment
             node2 = ox.distance.get_nearest_node(igraph, nodes[i])
             try:
-                route = ox.shortest_path(igraph, node1, node2, weight='length')
+                route = ox.shortest_path(igraph, node1, node2, weight='itime')
                 update_congestions(igraph, route, TIME_MULTIPLIER[row['Congestio_actual']])
             except nx.NetworkXNoPath:
                 try:
-                    route = ox.shortest_path(igraph, node2, node1, weight='length')
+                    route = ox.shortest_path(igraph, node2, node1, weight='itime')
                     update_congestions(igraph, route, TIME_MULTIPLIER[row['Congestio_actual']])
 
                 except nx.NetworkXNoPath:  # there is no path between the nodes, only happens in a few cases

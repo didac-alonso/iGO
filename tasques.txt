@@ -9,4 +9,11 @@ Readme
 Requirements
 
 
-després de documentar, anar provant amb els pesos per les diferents congestions
+després de documentar, anar provant amb els time multipliers per que s'assembli a google maps.
+
+
+mirar si quan trobem cami minim del segment, fer-ho per longitud o per itime, o per un mix de les dues o shortest path amb maxspeed (pero buscant els que donen més velocitat)
+
+posar prints per saber per a quina funcio estem o que estem fent.
+
+per exemple a shortest-paths bla bla bla, fer Calculating shortest path...
