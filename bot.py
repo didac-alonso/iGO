@@ -7,7 +7,6 @@ import os
 from datetime import datetime
 
 
-
 # /go destí: mostra a l'usuari un mapa per arribar de la seva posició actual fins al punt de destí escollit pel camí més curt segons el concetpe de ispeed. Exemples:
 # /go Campus Nord
 # /go Sagrada Família
@@ -36,17 +35,18 @@ WARNING_GO = '''Error 💣 Please make sure you give the correct and precise nam
                 '''
 MISSING_USER_LOC = '''Error: Missing user location.
                     Please send us your location before using /go o /where, to do so you can press the safety pin icon and select the location'''
-WAIT_TIME_SECONDS = 300 # number of seconds between each update of the igraph
+WAIT_TIME_SECONDS = 300  # number of seconds between each update of the igraph
 
 
 # Global variables
 GRAPH = get_graph()
 iGRAPH = None
 
+
 def start(update, context):
     '''Simply'''
     context.bot.send_message(chat_id=update.effective_chat.id, text=START)
-    
+
 
 def help(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text=HELP)
@@ -55,33 +55,41 @@ def help(update, context):
 def author(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text=AUTHORS)
 
+
 def go(update, context):
     try:
         lat, lon = query_to_location("/go ", update, context)
         user_lat, user_lon = context.user_data['user_location']
-        path_image, aprox_time, distance = get_shortest_path_with_itimes(iGRAPH, (user_lat, user_lon), (lat, lon))
-        context.bot.send_photo(chat_id = update.effective_chat.id, photo = open(path_image, 'rb'))
-        context.bot.send_message(chat_id=update.effective_chat.id, text="Estimated time: " + str(aprox_time))
+        path_image, aprox_time, distance = get_shortest_path_with_itimes(
+            iGRAPH, (user_lat, user_lon), (lat, lon))
+        context.bot.send_photo(chat_id=update.effective_chat.id, photo=open(path_image, 'rb'))
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text="Estimated time: " + str(aprox_time))
         aprox_arrival = datetime.now() + aprox_time
-        context.bot.send_message(chat_id=update.effective_chat.id, text="Estimated time arrival: {:d}:{:02d}:{:02d}".format(aprox_arrival.hour, aprox_arrival.minute, aprox_arrival.second))
-        context.bot.send_message(chat_id=update.effective_chat.id, text=f"Distance: {round(distance/1000, 1)} km")
+        context.bot.send_message(chat_id=update.effective_chat.id, text="Estimated time arrival: {:d}:{:02d}:{:02d}".format(
+            aprox_arrival.hour, aprox_arrival.minute, aprox_arrival.second))
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text=f"Distance: {round(distance/1000, 1)} km")
         os.remove(path_image)
 
     except:
         context.bot.send_message(chat_id=update.effective_chat.id, text=WARNING_GO)
     return
 
+
 def filter_coordinates(x):
     '''Filters the given string from unnecesary characters'''
-    for c in "()*,-+'/": x = x.replace(c, "")
+    for c in "()*,-+'/":
+        x = x.replace(c, "")
     return x
 
+
 def query_to_location(command, update, context):
-    try: # if the string given is in the format (latitude, longitude)
+    try:  # if the string given is in the format (latitude, longitude)
         query = context.args
-        query = list(map(lambda x : filter_coordinates(x), query))
+        query = list(map(lambda x: filter_coordinates(x), query))
         lat, lon = float(query[0]), float(query[1])
-    except: #the string given is a query
+    except:  # the string given is a query
         lat, lon = get_lat_lon(update.message.text.replace(command, ""))
     return lat, lon
 
@@ -89,20 +97,20 @@ def query_to_location(command, update, context):
 def where(update, context):
     try:
         image_filename = get_location_image(context.user_data['user_location'])
-        context.bot.send_photo(chat_id = update.effective_chat.id, photo = open(image_filename, 'rb'))
+        context.bot.send_photo(chat_id=update.effective_chat.id, photo=open(image_filename, 'rb'))
         os.remove(image_filename)
     except:
-        context.bot.send_message(chat_id=update.effective_chat.id, text = MISSING_USER_LOC)
+        context.bot.send_message(chat_id=update.effective_chat.id, text=MISSING_USER_LOC)
     return
-    
-    
+
 
 def pos(update, context):
     try:
         context.user_data['user_location'] = query_to_location("/pos ", update, context)
     except:
         print("Error with the position")
-    return  
+    return
+
 
 def user_location(update, context):
     '''aquesta funció es crida cada cop que arriba una nova localització d'un usuari'''
@@ -113,7 +121,7 @@ def user_location(update, context):
     context.user_data['user_location'] = message.location.latitude, message.location.longitude
 
 
-def update_igraph(): 
+def update_igraph():
     print("Pillant el igraph")
     global iGRAPH
     iGRAPH = get_igraph(GRAPH)
@@ -152,6 +160,6 @@ dispatcher.add_handler(MessageHandler(Filters.location, user_location))
 # engega el bot
 updater.start_polling()
 
+
 def main():
     pass
-            

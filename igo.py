@@ -21,7 +21,7 @@ PLACE = 'Barcelona, Catalonia'
 GRAPH_FILENAME = 'barcelona.graph'
 SIZE = 800
 LINE_SIZE = 2
-INFINITE_TIME = float('inf')    
+INFINITE_TIME = float('inf')
 HIGHWAYS_URL = 'https://opendata-ajuntament.barcelona.cat/data/dataset/1090983a-1c40-4609-8620-14ad49aae3ab/resource/1d6c814c-70ef-4147-aa16-a49ddb952f72/download/transit_relacio_trams.csv'
 CONGESTIONS_URL = 'https://opendata-ajuntament.barcelona.cat/data/dataset/8319c2b1-4c21-4962-9acd-6db4c5ff1148/resource/2d456eb5-4ea6-4f68-9794-2f3f1a58a933/download'
 COLOR_CONGESTIONS = ['silver', 'aqua', 'lime', 'orange', 'red', 'darkred', 'black']
@@ -86,6 +86,7 @@ def plot_graph(graph):
     fig, ax = ox.plot.plot_graph(graph)
     return
 
+
 def get_graph():
     '''Returns the graph of the GPS'''
     if not exists_graph(GRAPH_FILENAME):
@@ -94,13 +95,15 @@ def get_graph():
         save_graph(graph, GRAPH_FILENAME)
     else:
         graph = load_graph(GRAPH_FILENAME)
-        
+
     return graph
+
 
 def get_igraph(graph):
     highways = download_highways(HIGHWAYS_URL)
     congestions = download_congestions(CONGESTIONS_URL)
     return build_igraph(graph, highways, congestions)
+
 
 def download_highways(url):
     '''Downloads the information concerning the fastest streets of the city
@@ -159,15 +162,15 @@ def plot_congestions(highways, congestions, image_filename, size):
 def get_initial_time(graph):
     '''Creates a new attribute, itime (in seconds), with the optimal time for each edge'''
     nx.set_edge_attributes(graph, 0, 'itime')
-    for u,v,attr in graph.edges(data=True):
+    for u, v, attr in graph.edges(data=True):
         # length is in meters
         # maxspeed is in km/h
         # itime is in seconds
         length = attr['length']
         try:
             attr['itime'] = length / float(attr['maxspeed']) * 3.6
-        except: # there are some edges without maxspeed information
-            if length < 500: # street with length smaller than 500 meters.
+        except:  # there are some edges without maxspeed information
+            if length < 500:  # street with length smaller than 500 meters.
                 attr['itime'] = length / 10.0 * 3.6
             elif length < 1000:
                 attr['itime'] = length / 30.0 * 3.6
@@ -180,17 +183,18 @@ def build_igraph(graph, highways, congestions):
     igraph = graph.copy()
     highways_and_congestions = pd.merge(
         left=highways, right=congestions, left_on='Tram', right_on='Tram')
-    
+
     for index, row in highways_and_congestions.iterrows():
         coordinates = row['Coordenades']
         coordinates = list(map(float, coordinates.split(',')))
         # we create the nodes that form the section ("tram")
         nodes = [(coordinates[i+1], coordinates[i]) for i in range(0, len(coordinates), 2)]
         # get_nearest_node() takes points as (latitude, longitude) tuples, which is the opposite of what we get from the Ajuntament.
-        
-        node1 = ox.distance.get_nearest_node(igraph, nodes[0]) # nodes[0] is the initial
-        for i in range(1, len(nodes)): # for every edge in the segment of the highway
-            node2 = ox.distance.get_nearest_node(igraph, nodes[i]) # nodes[i+1] is the other extrem of the segment
+
+        node1 = ox.distance.get_nearest_node(igraph, nodes[0])  # nodes[0] is the initial
+        for i in range(1, len(nodes)):  # for every edge in the segment of the highway
+            # nodes[i+1] is the other extrem of the segment
+            node2 = ox.distance.get_nearest_node(igraph, nodes[i])
             try:
                 route = ox.shortest_path(igraph, node1, node2, weight='length')
                 update_congestions(igraph, route, TIME_MULTIPLIER[row['Congestio_actual']])
@@ -199,19 +203,21 @@ def build_igraph(graph, highways, congestions):
                     route = ox.shortest_path(igraph, node2, node1, weight='length')
                     update_congestions(igraph, route, TIME_MULTIPLIER[row['Congestio_actual']])
 
-                except nx.NetworkXNoPath: # there is no path between the nodes, only happens in a few cases
+                except nx.NetworkXNoPath:  # there is no path between the nodes, only happens in a few cases
                     pass
             node1 = node2
 
     return igraph
+
 
 def update_congestions(igraph, route, multiplier):
     '''Given the route from a segment, update the itime of the igraph using the factor multiplier'''
     for i in range(len(route)-1):
         # we put 0 as a key because its a MultiDigraph but with at most one edge between two nodes
         igraph[route[i]][route[i+1]][0]['itime'] *= multiplier
-    
+
     return
+
 
 def get_shortest_path_with_itimes(igraph, origin, destination):
     '''Given an igraph and an origin and a destination in the format (latitude, longitude), finds the
@@ -251,19 +257,20 @@ def get_shortest_path_with_itimes(igraph, origin, destination):
 
     return image_filename, aprox_time, round(distance, 1)
 
+
 def get_lat_lon(query):
     return ox.geocoder.geocode(query)
+
 
 def get_location_image(lat_lon):
     lat, lon = lat_lon
     user_map = StaticMap(SIZE-200, SIZE-200)
-    user_map.add_marker(CircleMarker((lon,lat), 'white', 24))
-    user_map.add_marker(CircleMarker((lon,lat), 'red', 18))
+    user_map.add_marker(CircleMarker((lon, lat), 'white', 24))
+    user_map.add_marker(CircleMarker((lon, lat), 'red', 18))
     image = user_map.render()
     image_filename = "temp%d.png" % random.randint(1000000, 9999999)
     image.save(image_filename)
     return image_filename
-
 
 
 # def main():
@@ -272,7 +279,7 @@ def get_location_image(lat_lon):
     # # a = graph.get_edge_data(8465686548, 2844600654)
     # # print(a)
     # # print(ox.basic_stats(graph))
-    # # print(ox.extended_stats(graph)) 
+    # # print(ox.extended_stats(graph))
     # # graph.edges
     # highways = download_highways(HIGHWAYS_URL)
     # congestions = download_congestions(CONGESTIONS_URL)
