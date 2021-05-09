@@ -88,14 +88,19 @@ def plot_graph(graph):
 
 def get_graph():
     '''Returns the graph of the GPS'''
-    if exists_graph(GRAPH_FILENAME):
-        graph = load_graph(GRAPH_FILENAME)
-    else:
+    if not exists_graph(GRAPH_FILENAME):
         graph = download_graph(PLACE)
         get_initial_time(graph)
         save_graph(graph, GRAPH_FILENAME)
+    else:
+        graph = load_graph(GRAPH_FILENAME)
+        
     return graph
 
+def get_igraph(graph):
+    highways = download_highways(HIGHWAYS_URL)
+    congestions = download_congestions(CONGESTIONS_URL)
+    return build_igraph(graph, highways, congestions)
 
 def download_highways(url):
     '''Downloads the information concerning the fastest streets of the city
@@ -104,12 +109,12 @@ def download_highways(url):
     return df
 
 
-def plot_highways(highways, image_file, size):
+def plot_highways(highways, image_filename, size):
     '''Input: - highways (DataFrame)
-              - image_file (name of the file you want to save the plot)
+              - image_filename (name of the file you want to save the plot)
               - size of the image (the map or plot)
     Translates the information of highways into a map (the plot).
-    Saves the map in the image_file and plots it.
+    Saves the map in the image_filename and plots it.
     '''
     bcn_map = StaticMap(size, size)
     for coordinates in highways['Coordenades']:
@@ -121,17 +126,17 @@ def plot_highways(highways, image_file, size):
         bcn_map.add_line(pol)
 
     image = bcn_map.render()
-    image.save(image_file)  # we save the image into our directory
+    image.save(image_filename)  # we save the image into our directory
 
 
-def plot_congestions(highways, congestions, image_file, size):
+def plot_congestions(highways, congestions, image_filename, size):
     '''Input: - highways (DataFrame)
               - congestions (DataFrame)
-              - image_file (name of the file you want to save the plot)
+              - image_filename (name of the file you want to save the plot)
               - size of the image (the map or plot)
 
     Translates the information of highways into a map (the plot) with their congestion
-    Saves the map in the image_file and plots it.
+    Saves the map in the image_filename and plots it.
     '''
     highways_and_congestions = pd.merge(
         left=highways, right=congestions, left_on='Tram', right_on='Tram')
@@ -148,7 +153,7 @@ def plot_congestions(highways, congestions, image_file, size):
         bcn_map.add_line(pol)
 
     image = bcn_map.render()
-    image.save(image_file)
+    image.save(image_filename)
 
 
 def get_initial_time(graph):
@@ -170,11 +175,11 @@ def get_initial_time(graph):
                 attr['itime'] = length / 50.0 * 3.6
 
 
-def build_igraph(igraph, highways, congestions):
+def build_igraph(graph, highways, congestions):
     '''Returns the igraph, which incorporates the notion of itime'''
+    igraph = graph.copy()
     highways_and_congestions = pd.merge(
         left=highways, right=congestions, left_on='Tram', right_on='Tram')
-    print("hola")
     
     for index, row in highways_and_congestions.iterrows():
         coordinates = row['Coordenades']
@@ -232,47 +237,61 @@ def get_shortest_path_with_itimes(igraph, origin, destination):
     route_map.add_marker(CircleMarker(coordinates[-1], 'green', 12))
 
     image = route_map.render()
-    image_file = "temp%d.png" % random.randint(1000000, 9999999)
-    image.save(image_file)
+    image_filename = "temp%d.png" % random.randint(1000000, 9999999)
+    image.save(image_filename)
 
     # We approximate the duration of the path
     aprox_time = sum([igraph[route[i]][route[i+1]][0]['itime'] for i in range(len(route)-1)])
-    aprox_time = str(datetime.timedelta(seconds=int(aprox_time)))
+    aprox_time = datetime.timedelta(seconds=int(aprox_time))
 
     # We approximate the distance of the path
     distance = sum([igraph[route[i]][route[i+1]][0]['length'] for i in range(len(route)-1)])
 
     print(aprox_time, round(distance, 2))
 
-    return image_file, aprox_time, round(distance, 2)
+    return image_filename, aprox_time, round(distance, 1)
+
+def get_lat_lon(query):
+    return ox.geocoder.geocode(query)
+
+def get_location_image(lat_lon):
+    lat, lon = lat_lon
+    user_map = StaticMap(SIZE-200, SIZE-200)
+    user_map.add_marker(CircleMarker((lon,lat), 'white', 24))
+    user_map.add_marker(CircleMarker((lon,lat), 'red', 18))
+    image = user_map.render()
+    image_filename = "temp%d.png" % random.randint(1000000, 9999999)
+    image.save(image_filename)
+    return image_filename
 
 
-def main():
-    print("hello")
-    igraph = get_graph()
-    # a = graph.get_edge_data(8465686548, 2844600654)
-    # print(a)
-    # print(ox.basic_stats(graph))
-    # print(ox.extended_stats(graph)) 
-    # graph.edges
-    highways = download_highways(HIGHWAYS_URL)
-    congestions = download_congestions(CONGESTIONS_URL)
-    # print(graph.nodes[2844600654])
-    # print(a)
-    igraph = build_igraph(igraph, highways, congestions)
-    # a = graph.get_edge_data(8465686548, 2844600654)
-    # route = ox.shortest_path(graph, 8465686548, 2844600654)
 
-    get_shortest_path_with_itimes(igraph, (41.408154, 2.184601), (41.397991, 2.140705))
-    # print(nodes_proj.loc[route])
-    # print(a)
-    # plot_graph(graph)
-    # plot_highways(highways, 'highways.png', SIZE)
+# def main():
+    # print("hello")
+    # igraph = get_graph()
+    # # a = graph.get_edge_data(8465686548, 2844600654)
+    # # print(a)
+    # # print(ox.basic_stats(graph))
+    # # print(ox.extended_stats(graph)) 
+    # # graph.edges
+    # highways = download_highways(HIGHWAYS_URL)
+    # congestions = download_congestions(CONGESTIONS_URL)
+    # # print(graph.nodes[2844600654])
+    # # print(a)
+    # igraph = build_igraph(igraph, highways, congestions)
+    # # a = graph.get_edge_data(8465686548, 2844600654)
+    # # route = ox.shortest_path(graph, 8465686548, 2844600654)
 
-    # plot_congestions(highways, congestions, 'congestions.png', SIZE)
+    # get_shortest_path_with_itimes(igraph, (41.408154, 2.184601), (41.397991, 2.140705))
+    # # print(nodes_proj.loc[route])
+    # # print(a)
+    # # plot_graph(graph)
+    # # plot_highways(highways, 'highways.png', SIZE)
 
-    # igraph = build_igraph(graph, highways, congestions)
+    # # plot_congestions(highways, congestions, 'congestions.png', SIZE)
+
+    # # igraph = build_igraph(graph, highways, congestions)
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()

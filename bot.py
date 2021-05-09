@@ -1,6 +1,10 @@
 from igo import *
+from threading import Timer
+import time
 # importa l'API de Telegram
-from telegram.ext import Updater, CommandHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, MessageFilter, Filters, ConversationHandler
+import os
+from datetime import datetime
 
 
 
@@ -21,23 +25,27 @@ Type or press /help to get more information about what I can do.'''
 HELP = '''This is what I can do for you! Type:
 /start: To get a warm welcome from me 😘 and to load the GPS
 /author: To know about my fantastic parents
-/go destination: Get the fastest route from your current location to the given destination
-                 e.g: go Campus Nord
-/where: Shows your current location
-'''
+/go destination: Get the fastest route from your current location to the given destination (make sure its precise for both of them)
+                 /go Sagrada Familia
+                 /go 41.4036047312297, 2.174364514974909
+/where: Shows your current location'''
 AUTHORS = "Authors of iGo DJ: Dídac Alonso López & Jacinto Suñer Soler"
+WARNING_GO = '''Error 💣 Please make sure you give the correct and precise name of the place you want to go or the pair latitude longitude. Here's an example:
+                /go Sagrada Familia
+                /go 41.4036047312297, 2.174364514974909
+                '''
+MISSING_USER_LOC = '''Error: Missing user location.
+                    Please send us your location before using /go o /where, to do so you can press the safety pin icon and select the location'''
+WAIT_TIME_SECONDS = 300 # number of seconds between each update of the igraph
+
 
 # Global variables
-GRAPH = None
+GRAPH = get_graph()
+iGRAPH = None
 
 def start(update, context):
-    '''Loads the graph used for the GPS...defineix una funció que saluda i que s'executarà quan el bot rebi el missatge /start'''
-    global GRAPH
-    GRAPH = get_graph()
-    plot_graph(GRAPH)
-    print('hello')
+    '''Simply'''
     context.bot.send_message(chat_id=update.effective_chat.id, text=START)
-    return GRAPH
     
 
 def help(update, context):
@@ -48,15 +56,74 @@ def author(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text=AUTHORS)
 
 def go(update, context):
-    pass
+    try:
+        lat, lon = query_to_location("/go ", update, context)
+        user_lat, user_lon = context.user_data['user_location']
+        path_image, aprox_time, distance = get_shortest_path_with_itimes(iGRAPH, (user_lat, user_lon), (lat, lon))
+        context.bot.send_photo(chat_id = update.effective_chat.id, photo = open(path_image, 'rb'))
+        context.bot.send_message(chat_id=update.effective_chat.id, text="Estimated time: " + str(aprox_time))
+        aprox_arrival = datetime.now() + aprox_time
+        context.bot.send_message(chat_id=update.effective_chat.id, text="Estimated time arrival: {:d}:{:02d}:{:02d}".format(aprox_arrival.hour, aprox_arrival.minute, aprox_arrival.second))
+        context.bot.send_message(chat_id=update.effective_chat.id, text=f"Distance: {round(distance/1000, 1)} km")
+        os.remove(path_image)
+
+    except:
+        context.bot.send_message(chat_id=update.effective_chat.id, text=WARNING_GO)
+    return
+
+def filter_coordinates(x):
+    '''Filters the given string from unnecesary characters'''
+    for c in "()*,-+'/": x = x.replace(c, "")
+    return x
+
+def query_to_location(command, update, context):
+    try: # if the string given is in the format (latitude, longitude)
+        query = context.args
+        query = list(map(lambda x : filter_coordinates(x), query))
+        lat, lon = float(query[0]), float(query[1])
+    except: #the string given is a query
+        lat, lon = get_lat_lon(update.message.text.replace(command, ""))
+    return lat, lon
+
 
 def where(update, context):
-    pass
+    try:
+        image_filename = get_location_image(context.user_data['user_location'])
+        context.bot.send_photo(chat_id = update.effective_chat.id, photo = open(image_filename, 'rb'))
+        os.remove(image_filename)
+    except:
+        context.bot.send_message(chat_id=update.effective_chat.id, text = MISSING_USER_LOC)
+    return
+    
+    
 
 def pos(update, context):
-    pass
+    try:
+        context.user_data['user_location'] = query_to_location("/pos ", update, context)
+    except:
+        print("Error with the position")
+    return  
+
+def user_location(update, context):
+    '''aquesta funció es crida cada cop que arriba una nova localització d'un usuari'''
+
+    # aquí, els missatges són rars: el primer és de debò, els següents són edicions
+    message = update.edited_message if update.edited_message else update.message
+    # extreu la localització del missatge
+    context.user_data['user_location'] = message.location.latitude, message.location.longitude
 
 
+def update_igraph(): 
+    print("Pillant el igraph")
+    global iGRAPH
+    iGRAPH = get_igraph(GRAPH)
+    print("Graph updated")
+    Timer(WAIT_TIME_SECONDS, update_igraph).start()
+
+
+# ticker = threading.Event()
+# while not ticker.wait(WAIT_TIME_SECONDS):
+update_igraph()
 
 # declara una constant amb el access token que llegeix de token.txt
 TOKEN = open('token.txt').read().strip()
@@ -79,6 +146,7 @@ dispatcher.add_handler(CommandHandler('where', where))
 
 dispatcher.add_handler(CommandHandler('pos', pos))
 
+dispatcher.add_handler(MessageHandler(Filters.location, user_location))
 
 
 # engega el bot
