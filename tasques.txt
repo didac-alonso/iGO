@@ -1,0 +1,12 @@
+que fa la funcio
+input
+output
+prec
+O
+
+Readme
+
+Requirements
+
+
+després de documentar, anar provant amb els pesos per les diferents congestions
