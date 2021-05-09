@@ -33,8 +33,10 @@ TIME_MULTIPLIER = [1.0, 1.0, 1.5, 2, 2.5, 3.0, INFINITE_TIME]
 
 
 def download_graph(place):
-    '''Downloads the graph from the given place.
-    The returned graph is a Directed Graph from the module networkx'''
+    '''Downloads and returns the graph from the given place on earth (compatible with osmnx module)
+    The returned graph is a Directed Graph from the module networkx.'''
+
+    # Get the MultiDiGraph from the given place and for driving purposes.
     graph = ox.graph_from_place(place, network_type='drive', simplify=True)
 
     # We convert the graph to a Digraph to only have at most one edge for each pair of vertex
@@ -47,25 +49,32 @@ def download_graph(place):
 
 
 def download_highways(url):
-    '''Downloads the information concerning the fastest streets of the city
-    The method returns a DataFrame'''
+    '''Downloads the information concerning the fastest streets of the city (called "highways").
+    Input: URL with a csv file of the highways and their information.
+    Output: DataFrame'''
     return pd.read_csv(url)
 
 
 def download_congestions(url):
     '''Downloads the information concerning the congestions of the highways
-    The method returns a DataFrame'''
+    Input:  URL with a csv file of the highways and their information.
+    Output: DataFrame'''
     return pd.read_csv(url, sep='#', names=['Tram', 'Data', 'Congestio_actual', 'Congestio_prevista'])
 
 
 def save_graph(graph, filename):
-    '''Saves the given graph in the given filename'''
+    '''Saves the given graph into the given filename.
+    Input: - Networkx Graph
+           - name of the file in which we want to save the graph
+    No output.'''
     with open(filename, 'wb') as file:
         pickle.dump(graph, file)
 
 
 def load_graph(filename):
-    '''loads the graph stored in the filename'''
+    '''Loads the graph stored in the given filename.
+    Input:  name of the file we want to load.
+    Output: Networkx Graph'''
     with open(filename, 'rb') as file:
         graph = pickle.load(file)
     return graph
@@ -73,16 +82,21 @@ def load_graph(filename):
 
 def exists_graph(filename):
     '''Returns a boolean that tells if the filename containing the graph is created
+    Input: name of the file we want to check.
+    Ouput: boolean (true if the file exists, false otherwise).
     Attention: it does not check if the filename contains a graph, only if the file exists,
-    so be careful with the names you use to save the graph'''
+    so be careful with the names you use to save the graph.'''
     return os.path.isfile(filename)
 
 
 def get_graph():
-    '''Returns the graph of the GPS'''
+    '''Returns the graph of PLACE (see global variable).
+    Output: Networkx MultiDiGraph with an additional edge attribute, itime, containing
+    the minimum time it takes to cross every edge of the graph. This attribute will further be
+    modified to be adjusted to the congestions of PLACE'''
     if not exists_graph(GRAPH_FILENAME):
         graph = download_graph(PLACE)
-        get_initial_time(graph)
+        get_initial_itime(graph)  # we create the additional attribute
         save_graph(graph, GRAPH_FILENAME)
     else:
         graph = load_graph(GRAPH_FILENAME)
@@ -91,74 +105,26 @@ def get_graph():
 
 
 def get_igraph(graph):
+    '''
+    Input: Networkx MultiDiGraph (OSmnx Graph) graph, containing the initial values of the attribute itime.
+    Output: Networkx MultiDiGraph (OSmnx Graph) igraph, containing the adjusted attribute itime with the congestions of PLACE.
+    '''
     highways = download_highways(HIGHWAYS_URL)
     congestions = download_congestions(CONGESTIONS_URL)
     return build_igraph(graph, highways, congestions)
 
 
-#def download_highways(url):
+# def download_highways(url):
 #    '''Downloads the information concerning the fastest streets of the city
 #    The method returns a DataFrame'''
  #   df = pd.read_csv(url, usecols=['Tram', 'Descripció', 'Coordenades'])
   #  return df
 
 
-def plot_graph(graph):
-    '''Plots the given MultiDiGraph graph'''
-    fig, ax = ox.plot.plot_graph(graph)
-    # osmnx.plot_graph(g, show=False, save=True, filepath='vic.png')
-    return
-
-
-def plot_highways(highways, image_filename, size):
-    '''Input: - highways (DataFrame)
-              - image_filename (name of the file you want to save the plot)
-              - size of the image (the map or plot)
-    Translates the information of highways into a map (the plot).
-    Saves the map in the image_filename and plots it.
-    '''
-    bcn_map = StaticMap(size, size)
-    for coordinates in highways['Coordenades']:
-        # we separate the coordinates and put them in a list
-        coordinates = list(map(float, coordinates.split(',')))
-        coordinates = [[coordinates[i], coordinates[i+1]]
-                       for i in range(0, len(coordinates), 2)]  # we create the nodes that form the section ("tram")
-        pol = Line(coordinates, 'blue', LINE_SIZE)  # we paint the section in the map
-        bcn_map.add_line(pol)
-
-    image = bcn_map.render()
-    image.save(image_filename)  # we save the image into our directory
-
-
-def plot_congestions(highways, congestions, image_filename, size):
-    '''Input: - highways (DataFrame)
-              - congestions (DataFrame)
-              - image_filename (name of the file you want to save the plot)
-              - size of the image (the map or plot)
-
-    Translates the information of highways into a map (the plot) with their congestion
-    Saves the map in the image_filename and plots it.
-    '''
-    highways_and_congestions = pd.merge(
-        left=highways, right=congestions, left_on='Tram', right_on='Tram')
-
-    bcn_map = StaticMap(size, size)
-
-    for index, row in highways_and_congestions.iterrows():
-        coordinates = row['Coordenades']
-        coordinates = list(map(float, coordinates.split(',')))
-        # we create the nodes that form the section ("tram")
-        coordinates = [[coordinates[i], coordinates[i+1]] for i in range(0, len(coordinates), 2)]
-        # we paint the section in the map using the color coding for each congestion
-        pol = Line(coordinates, COLOR_CONGESTIONS[row['Congestio_actual']], LINE_SIZE)
-        bcn_map.add_line(pol)
-
-    image = bcn_map.render()
-    image.save(image_filename)
-
-
-def get_initial_time(graph):
-    '''Creates a new attribute, itime (in seconds), with the optimal time for each edge'''
+def get_initial_itime(graph):
+    '''Given a graph, creates a new attribute, itime (in seconds), with the optimal time for each edge.
+    Input: Networkx MultiDiGraph (OSmnx Graph) graph.
+    No output '''
     nx.set_edge_attributes(graph, 0, 'itime')
     for u, v, attr in graph.edges(data=True):
         # length is in meters
@@ -166,9 +132,10 @@ def get_initial_time(graph):
         # itime is in seconds
         length = attr['length']
         try:
-            attr['itime'] = length / float(attr['maxspeed']) * 3.6
+            attr['itime'] = length / float(attr['maxspeed']) * 3.6  # conversion to seconds
         except:  # there are some edges without maxspeed information
-            if length < 500:  # street with length smaller than 500 meters.
+            # we adjust itime for theses edges based on their lengths
+            if length < 500:
                 attr['itime'] = length / 10.0 * 3.6
             elif length < 1000:
                 attr['itime'] = length / 30.0 * 3.6
@@ -177,8 +144,13 @@ def get_initial_time(graph):
 
 
 def build_igraph(graph, highways, congestions):
-    '''Returns the igraph, which incorporates the notion of itime'''
+    '''Returns the igraph, which incorporates the notion of itime adjusted to the congestions of the graph's place
+    Input: - Networkx MultiDiGraph (OSmnx Graph) graph: already includes the initial values of itime.
+           - DataFrame highways: contains the different highways and their coordinates
+           - DataFrame congestions: contains the level of congestion of the highways, but without the coordinates
+    Output: Networkx MultiDiGraph (OSmnx Graph) igraph'''
     igraph = graph.copy()
+    # we merge highways and congestions to have the coordinates and the level of congestion in the same place
     highways_and_congestions = pd.merge(
         left=highways, right=congestions, left_on='Tram', right_on='Tram')
 
@@ -189,27 +161,34 @@ def build_igraph(graph, highways, congestions):
         nodes = [(coordinates[i+1], coordinates[i]) for i in range(0, len(coordinates), 2)]
         # get_nearest_node() takes points as (latitude, longitude) tuples, which is the opposite of what we get from the Ajuntament.
 
-        node1 = ox.distance.get_nearest_node(igraph, nodes[0])  # nodes[0] is the initial
+        # for each segment, we assign the congestion to all the edges of the shortest path from one extreme of the segment to the other.
+        # we are actually modifying itime attribute based on the congestion.
+        node1 = ox.distance.get_nearest_node(igraph, nodes[0])  # nodes[0] is the initial extreme
         for i in range(1, len(nodes)):  # for every edge in the segment of the highway
-            # nodes[i+1] is the other extrem of the segment
-            node2 = ox.distance.get_nearest_node(igraph, nodes[i])
-            try:
-                route = ox.shortest_path(igraph, node1, node2, weight='itime')
-                update_congestions(igraph, route, TIME_MULTIPLIER[row['Congestio_actual']])
-            except nx.NetworkXNoPath:
-                try:
-                    route = ox.shortest_path(igraph, node2, node1, weight='itime')
-                    update_congestions(igraph, route, TIME_MULTIPLIER[row['Congestio_actual']])
 
+            node2 = ox.distance.get_nearest_node(igraph, nodes[i])
+
+            try:  # if the path is from node1 to node2
+                route = ox.shortest_path(igraph, node1, node2, weight='itime')
+                update_itime(igraph, route, TIME_MULTIPLIER[row['Congestio_actual']])
+            except nx.NetworkXNoPath:
+                try:  # if the path is from node2 to node 1
+                    route = ox.shortest_path(igraph, node2, node1, weight='itime')
+                    update_itime(igraph, route, TIME_MULTIPLIER[row['Congestio_actual']])
                 except nx.NetworkXNoPath:  # there is no path between the nodes, only happens in a few cases
                     pass
+
             node1 = node2
 
     return igraph
 
 
-def update_congestions(igraph, route, multiplier):
-    '''Given the route from a segment, update the itime of the igraph using the factor multiplier'''
+def update_itime(igraph, route, multiplier):
+    '''Given the route from a segment, update the itime of the igraph using the factor multiplier
+    Input: - igraph (Networkx MultiDiGraph (OSmnx Graph))
+           - route (List of Node IDs)
+           - multiplier (float): multiplies itime
+    No output.'''
     for i in range(len(route)-1):
         # we put 0 as a key because its a MultiDigraph but with at most one edge between two nodes
         igraph[route[i]][route[i+1]][0]['itime'] *= multiplier
@@ -218,20 +197,31 @@ def update_congestions(igraph, route, multiplier):
 
 
 def get_shortest_path_with_itimes(igraph, origin, destination):
-    '''Given an igraph and an origin and a destination in the format (latitude, longitude), finds the
-    shortest path using the concept of itime'''
+    '''Given an igraph, an origin and a destination, finds the shortest path using the concept of itime.
+    Input: - igraph (Networkx MultiDiGraph (OSmnx Graph))
+           - origin (has to be in the format (latitude, longitude))
+           - destination (has to be in the format (latitude, longitude))
+    Output:
+           - image_filename: name of the file in which the path is plotted
+           - aprox_time: approximate time from the given origin to the given destination
+           - distance: approximate distance from the given origin to the given destination'''
 
-    print("shortest path beginning")
+    print("Shortest path beginning...")
+
     route_map = StaticMap(SIZE, SIZE)
-    # we convert the (latitude, longitude) format into an ID of a node in the igraph
+    # We convert the (latitude, longitude) format into an ID of a node in the igraph
     origin = ox.distance.get_nearest_node(igraph, origin)
     destination = ox.distance.get_nearest_node(igraph, destination)
+
     route = ox.shortest_path(igraph, origin, destination, weight='itime')
-    # we convert each node ID of the path into the format (longitude, latitude)
+
+    # We convert each node ID of the path into the format (longitude, latitude)
     coordinates = [[igraph.nodes[node]['x'], igraph.nodes[node]['y']] for node in route]
 
+    # We add the path in the map
     line = Line(coordinates, 'blue', 4)
     route_map.add_line(line)
+
     # We mark the beginning/origin of the path
     route_map.add_marker(CircleMarker(coordinates[0], 'white', 18))
     route_map.add_marker(CircleMarker(coordinates[0], 'red', 12))
@@ -240,6 +230,7 @@ def get_shortest_path_with_itimes(igraph, origin, destination):
     route_map.add_marker(CircleMarker(coordinates[-1], 'white', 18))
     route_map.add_marker(CircleMarker(coordinates[-1], 'green', 12))
 
+    # We save the image into a file
     image = route_map.render()
     image_filename = "temp%d.png" % random.randint(1000000, 9999999)
     image.save(image_filename)
@@ -251,16 +242,20 @@ def get_shortest_path_with_itimes(igraph, origin, destination):
     # We approximate the distance of the path
     distance = sum([igraph[route[i]][route[i+1]][0]['length'] for i in range(len(route)-1)])
 
-    print(aprox_time, round(distance, 2))
+    print("...Shortest path finished")
 
     return image_filename, aprox_time, round(distance, 1)
 
 
 def get_lat_lon(query):
+    '''Given a name of a location (query) as a string,
+    returns its coordinates in the format (latitude, longitude)'''
     return ox.geocoder.geocode(query)
 
 
 def get_location_image(lat_lon):
+    '''
+    '''
     lat, lon = lat_lon
     user_map = StaticMap(SIZE-200, SIZE-200)
     user_map.add_marker(CircleMarker((lon, lat), 'white', 24))
@@ -271,32 +266,60 @@ def get_location_image(lat_lon):
     return image_filename
 
 
-# def main():
-    # print("hello")
-    # igraph = get_graph()
-    # # a = graph.get_edge_data(8465686548, 2844600654)
-    # # print(a)
-    # # print(ox.basic_stats(graph))
-    # # print(ox.extended_stats(graph))
-    # # graph.edges
-    # highways = download_highways(HIGHWAYS_URL)
-    # congestions = download_congestions(CONGESTIONS_URL)
-    # # print(graph.nodes[2844600654])
-    # # print(a)
-    # igraph = build_igraph(igraph, highways, congestions)
-    # # a = graph.get_edge_data(8465686548, 2844600654)
-    # # route = ox.shortest_path(graph, 8465686548, 2844600654)
-
-    # get_shortest_path_with_itimes(igraph, (41.408154, 2.184601), (41.397991, 2.140705))
-    # # print(nodes_proj.loc[route])
-    # # print(a)
-    # # plot_graph(graph)
-    # # plot_highways(highways, 'highways.png', SIZE)
-
-    # # plot_congestions(highways, congestions, 'congestions.png', SIZE)
-
-    # # igraph = build_igraph(graph, highways, congestions)
+def plot_graph(graph):
+    '''Plots the given MultiDiGraph graph. If an error occurs, it doesn't plot it.'''
+    try:
+        fig, ax = ox.plot.plot_graph(graph)
+    except:
+        pass
 
 
-# if __name__ == "__main__":
-#     main()
+def plot_highways(highways, image_filename, size):
+    '''Saves the plot of highways in the given image_filename with the given size.
+    Input: - highways (DataFrame)
+           - image_filename (name of the file you want to save the plot)
+           - size of the image.
+    No Output.
+    '''
+    place_map = StaticMap(size, size)
+    for coordinates in highways['Coordenades']:
+
+        # we separate the coordinates and put them in a list
+        coordinates = list(map(float, coordinates.split(',')))
+
+        # we create the nodes that form the section ("tram")
+        coordinates = [[coordinates[i], coordinates[i+1]] for i in range(0, len(coordinates), 2)]
+
+        # we paint the section in the map
+        pol = Line(coordinates, 'blue', LINE_SIZE)
+        place_map.add_line(pol)
+
+    image = place_map.render()
+    image.save(image_filename)  # we save the image into our directory
+
+
+def plot_congestions(highways, congestions, image_filename, size):
+    '''Translates the information of highways and their congestions into a map (the plot) using a color coding.
+    Saves the map in the image_filename given the size of the image.
+    Input: - highways (DataFrame)
+           - congestions (DataFrame)
+           - image_filename (name of the file you want to save the plot)
+           - size of the image.
+    No Output.
+    '''
+    highways_and_congestions = pd.merge(
+        left=highways, right=congestions, left_on='Tram', right_on='Tram')
+
+    place_map = StaticMap(size, size)
+
+    for index, row in highways_and_congestions.iterrows():
+        coordinates = row['Coordenades']
+        coordinates = list(map(float, coordinates.split(',')))
+        # we create the nodes that form the section ("tram")
+        coordinates = [[coordinates[i], coordinates[i+1]] for i in range(0, len(coordinates), 2)]
+        # we paint the section in the map using the color coding for each congestion
+        pol = Line(coordinates, COLOR_CONGESTIONS[row['Congestio_actual']], LINE_SIZE)
+        place_map.add_line(pol)
+
+    image = place_map.render()
+    image.save(image_filename)

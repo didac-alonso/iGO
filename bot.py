@@ -6,34 +6,27 @@ import os
 from datetime import datetime
 
 
-# /go destí: mostra a l'usuari un mapa per arribar de la seva posició actual fins al punt de destí escollit pel camí més curt segons el concetpe de ispeed. Exemples:
-# /go Campus Nord
-# /go Sagrada Família
-# /go Pla de Palau, 18 (Facultat de Nàutica)
-# /where: mostra la posició actual de l'usuari.
-# També hi ha una comanda secreta que permet falsejar la posició actual de l'usuari, de forma que es puguin fer proves facilment sense haver de sortir de casa:
-
-# /pos: fixa la posició actual de l'usuari a una posició falsa. Exemples:
-# /pos Campus Nord
-# /pos 41.38248 2.18511 (Facultat de Nàutica)
-
 #   Messages sent by the bot
 START = '''Hi there! I'm iGo DJ, your favorite GPS from Barcelona (Spain)! 🤠
-Type or press /help to get more information about what I can do.'''
+Type or press /help to get more information about what I can do 👌'''
 HELP = '''This is what I can do for you! Type:
-/start: To get a warm welcome from me 😘 and to load the GPS
-/author: To know about my fantastic parents
+/start: To get a warm welcome from me 😘
+/author: To know about my fantastic parents.
 /go destination: Get the fastest route from your current location to the given destination (make sure its precise for both of them)
-                 /go Sagrada Familia
-                 /go 41.4036047312297, 2.174364514974909
+                 using the concept of itime, which takes into account the congestions of the city.
+                 For example, try:
+                     /go Sagrada Familia
+                     /go 41.4036047312297, 2.174364514974909
 /where: Shows your current location'''
 AUTHORS = "Authors of iGo DJ: Dídac Alonso López & Jacinto Suñer Soler"
+
 WARNING_GO = '''Error 💣 Please make sure you give the correct and precise name of the place you want to go or the pair latitude longitude. Here's an example:
                 /go Sagrada Familia
                 /go 41.4036047312297, 2.174364514974909
                 '''
 MISSING_USER_LOC = '''Error: Missing user location.
-                    Please send us your location before using /go o /where, to do so you can press the safety pin icon and select the location'''
+Please send us your location before using /go or /where, to do so you can press the safety pin icon and select the location.'''
+
 WAIT_TIME_SECONDS = 300  # number of seconds between each update of the igraph
 
 
@@ -43,54 +36,63 @@ iGRAPH = None
 
 
 def start(update, context):
-    '''Simply'''
+    '''Gives a warm welcome to the customer.'''
     context.bot.send_message(chat_id=update.effective_chat.id, text=START)
 
 
 def help(update, context):
+    '''Explains what the bot can do for the customer.'''
     context.bot.send_message(chat_id=update.effective_chat.id, text=HELP)
 
 
 def author(update, context):
+    '''Shows to the costumer the authors of the bot'''
     context.bot.send_message(chat_id=update.effective_chat.id, text=AUTHORS)
 
 
 def go(update, context):
+    '''Given the command /go followed by a destination, either in the format of an address or with the coordinates,
+    returns information about the shortest path from the costumer's current location to the given destination.
+    More precisely, the bot sends:
+    1) An image with the route the costumer has to follow.
+    2) The estimate time it takes to get to the destination.
+    3) The estimate time arrival.
+    4) The estimate distance from one place to another.
+    '''
+    print("Starting command /go...")
+
     try:
-        lat, lon = query_to_location("/go ", update, context)
+        lat, lon = query_to_location("/go", update, context)
         user_lat, user_lon = context.user_data['user_location']
-        path_image, aprox_time, distance = get_shortest_path_with_itimes(
-            iGRAPH, (user_lat, user_lon), (lat, lon))
+        path_image, aprox_time, distance = get_shortest_path_with_itimes(iGRAPH,
+                                                                         (user_lat, user_lon),
+                                                                         (lat, lon))
+
+        # Sends picture of the path and deletes it from the directory
         context.bot.send_photo(chat_id=update.effective_chat.id, photo=open(path_image, 'rb'))
-        context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text="Estimated time: " + str(aprox_time))
-        aprox_arrival = datetime.now() + aprox_time
-        context.bot.send_message(chat_id=update.effective_chat.id, text="Estimated time arrival: {:d}:{:02d}:{:02d}".format(
-            aprox_arrival.hour, aprox_arrival.minute, aprox_arrival.second))
-        context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text=f"Distance: {round(distance/1000, 1)} km")
         os.remove(path_image)
 
+        # Gives the estimate time
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text="Estimated time: " + str(aprox_time))
+
+        # Gives the estimate time arrival
+        aprox_arrival = datetime.now() + aprox_time
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text="Estimated time arrival: {:d}:{:02d}:{:02d}".format(aprox_arrival.hour,
+                                                                                          aprox_arrival.minute,
+                                                                                          aprox_arrival.second))
+        # Gives the distance to the destination
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text=f"Distance: {round(distance/1000, 1)} km")
+
     except:
+        print("---Error in /go query---")
         context.bot.send_message(chat_id=update.effective_chat.id, text=WARNING_GO)
+
+    print("...Command /go finished")
+
     return
-
-
-def filter_coordinates(x):
-    '''Filters the given string from unnecesary characters'''
-    for c in "()*,-+'/":
-        x = x.replace(c, "")
-    return x
-
-
-def query_to_location(command, update, context):
-    try:  # if the string given is in the format (latitude, longitude)
-        query = context.args
-        query = list(map(lambda x: filter_coordinates(x), query))
-        lat, lon = float(query[0]), float(query[1])
-    except:  # the string given is a query
-        lat, lon = get_lat_lon(update.message.text.replace(command, ""))
-    return lat, lon
 
 
 def where(update, context):
@@ -105,7 +107,7 @@ def where(update, context):
 
 def pos(update, context):
     try:
-        context.user_data['user_location'] = query_to_location("/pos ", update, context)
+        context.user_data['user_location'] = query_to_location("/pos", update, context)
     except:
         print("Error with the position")
     return
@@ -120,16 +122,43 @@ def user_location(update, context):
     context.user_data['user_location'] = message.location.latitude, message.location.longitude
 
 
+def filter_coordinates(x):
+    '''Filters the given string from unnecesary characters'''
+    for c in "()*,-+'/":
+        x = x.replace(c, "")
+    return x
+
+
+def query_to_location(command, update, context):
+    '''Converts the given location by the user into a tuple of coordinates (latitude, lontitude).
+       The command can be "/go", "/pos", or another one if it uses this method'''
+
+    print("Converting query to location...")
+
+    command += " "
+
+    try:  # if the string given is in the format (latitude, longitude)
+        query = context.args
+        query = list(map(lambda x: filter_coordinates(x), query))
+        lat, lon = float(query[0]), float(query[1])
+    except:  # the string given is a query
+        # we delete the command from the whole message given by the user
+        lat, lon = get_lat_lon(update.message.text.replace(command, ""))
+
+    print("...query converted")
+
+    return lat, lon
+
+
 def update_igraph():
-    print("Pillant el igraph")
+    ''''''
+    print("Updating the igraph")
     global iGRAPH
     iGRAPH = get_igraph(GRAPH)
-    print("Graph updated")
+    print("Igraph updated")
     Timer(WAIT_TIME_SECONDS, update_igraph).start()
 
 
-# ticker = threading.Event()
-# while not ticker.wait(WAIT_TIME_SECONDS):
 update_igraph()
 
 # declara una constant amb el access token que llegeix de token.txt
