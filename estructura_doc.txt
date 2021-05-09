@@ -1,0 +1,9 @@
+que fa la funcio
+input
+output
+prec
+O
+
+Readme
+
+Requirements

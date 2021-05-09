@@ -36,8 +36,10 @@ def download_graph(place):
     '''Downloads the graph from the given place.
     The returned graph is a Directed Graph from the module networkx'''
     graph = ox.graph_from_place(place, network_type='drive', simplify=True)
+
     # We convert the graph to a Digraph to only have at most one edge for each pair of vertex
     graph = ox.utils_graph.get_digraph(graph, weight='length')
+
     # We convert it to a MultiDiGraph (because its the type of Graphs OSmnx uses)
     graph = nx.MultiDiGraph(graph)
 
