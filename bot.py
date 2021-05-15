@@ -34,9 +34,14 @@ WAIT_TIME_SECONDS = 300  # number of seconds between each update of the igraph
 GRAPH = get_graph()
 iGRAPH = None
 
+# Necessary items to work with Telegram
+TOKEN = open('token.txt').read().strip()
+updater = Updater(token=TOKEN, use_context=True)
+dispatcher = updater.dispatcher
+
 
 def start(update, context):
-    '''Gives a warm welcome to the customer.'''
+    '''Gives a warm welcome to the user.'''
     context.bot.send_message(chat_id=update.effective_chat.id, text=START)
 
 
@@ -52,14 +57,15 @@ def author(update, context):
 
 def go(update, context):
     '''Given the command /go followed by a destination, either in the format of an address or with the coordinates,
-    returns information about the shortest path from the costumer's current location to the given destination.
+    returns information about the shortest path from the user's current location to the given destination.
     More precisely, the bot sends:
     1) An image with the route the costumer has to follow.
     2) The estimate time it takes to get to the destination.
     3) The estimate time arrival.
     4) The estimate distance from one place to another.
     '''
-    print("Starting command /go...")
+    # This print is for testing purposes, uncomment it in order to see when this command is being executed
+    # print("Starting command /go...")
 
     try:
         lat, lon = query_to_location("/go", update, context)
@@ -90,12 +96,17 @@ def go(update, context):
         print("---Error in /go query---")
         context.bot.send_message(chat_id=update.effective_chat.id, text=WARNING_GO)
 
-    print("...Command /go finished")
+     # This print is for testing purposes, uncomment it in order to see when this command is being executed
+    # print("...Command /go finished")
 
     return
 
 
 def where(update, context):
+    '''
+    Given the command /where, sends an image of the current user's location in the map.
+    If the user has not give its location it sends an error message to the user.
+    '''
     try:
         image_filename = get_location_image(context.user_data['user_location'])
         context.bot.send_photo(chat_id=update.effective_chat.id, photo=open(image_filename, 'rb'))
@@ -106,6 +117,12 @@ def where(update, context):
 
 
 def pos(update, context):
+    '''
+    This method is for testing purposes, is called sending /pos location to the bot,
+    it will save a ficticius user's location, specified by location.
+    If the location given is not found or is mispelled, it notifies via message.
+    '''
+    
     try:
         context.user_data['user_location'] = query_to_location("/pos", update, context)
     except:
@@ -114,11 +131,15 @@ def pos(update, context):
 
 
 def user_location(update, context):
-    '''aquesta funció es crida cada cop que arriba una nova localització d'un usuari'''
+    '''
+    This method is called every time the user sends a new location, is adapted to work
+    with static and dynamic location. It saves the user location.
+    '''
 
-    # aquí, els missatges són rars: el primer és de debò, els següents són edicions
+    # takes the message of the user, and if its dynamic, the updates are considered
+    # as edition of the message
     message = update.edited_message if update.edited_message else update.message
-    # extreu la localització del missatge
+    # takes the localization from the message and saves it.
     context.user_data['user_location'] = message.location.latitude, message.location.longitude
 
 
@@ -133,7 +154,8 @@ def query_to_location(command, update, context):
     '''Converts the given location by the user into a tuple of coordinates (latitude, lontitude).
        The command can be "/go", "/pos", or another one if it uses this method'''
 
-    print("Converting query to location...")
+    # This print is for testing purposes, uncomment it in order to see when this command is being executed
+    # print("Converting query to location...")
 
     command += " "
 
@@ -151,27 +173,26 @@ def query_to_location(command, update, context):
 
 
 def update_igraph():
-    ''''''
-    print("Updating the igraph")
+    '''
+    This method is called every 5 minutes in another thread in order to make the bot fluid, 
+    while the igraph is updating. It updates the igraph with the newest highways and congestions information.
+    '''
+    # This print is for testing purposes, uncomment it in order to see when this command is being executed
+    # print("Updating the igraph")
     global iGRAPH
     iGRAPH = get_igraph(GRAPH)
-    print("Igraph updated")
+    # This print is for testing purposes, uncomment it in order to see when this command is being executed
+    # print("Igraph updated")
     Timer(WAIT_TIME_SECONDS, update_igraph).start()
 
-
+# The first time the igraph must be updated "manually".
 update_igraph()
 
-# declara una constant amb el access token que llegeix de token.txt
-TOKEN = open('token.txt').read().strip()
 
-# crea objectes per treballar amb Telegram
-updater = Updater(token=TOKEN, use_context=True)
-dispatcher = updater.dispatcher
-
-# indica que quan el bot rebi la comanda /start s'executi la funció start
+# Indicates that the bot will execute the specified methods (second parameter)
+# when it recieves the message /command (first parameter).
 dispatcher.add_handler(CommandHandler('start', start))
 
-# help
 dispatcher.add_handler(CommandHandler('help', help))
 
 dispatcher.add_handler(CommandHandler('author', author))
@@ -182,10 +203,11 @@ dispatcher.add_handler(CommandHandler('where', where))
 
 dispatcher.add_handler(CommandHandler('pos', pos))
 
+# Indicates that the bot must execute user_location method when it recieves a location
 dispatcher.add_handler(MessageHandler(Filters.location, user_location))
 
 
-# engega el bot
+# turn on the bot
 updater.start_polling()
 
 
