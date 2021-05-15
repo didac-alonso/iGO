@@ -180,12 +180,17 @@ def update_igraph():
     # This print is for testing purposes, uncomment it in order to see when this command is being executed
     # print("Updating the igraph")
     global iGRAPH
+    
     iGRAPH = get_igraph(GRAPH)
+    
     # This print is for testing purposes, uncomment it in order to see when this command is being executed
     # print("Igraph updated")
-    Timer(WAIT_TIME_SECONDS, update_igraph).start()
 
-# The first time the igraph must be updated "manually".
+    # This commands sets a task that will be executed in background every 5 minutes. The task is the method itself,
+    # so it will update the graph every 5 minutes.
+    Timer(WAIT_TIME_SECONDS, update_igraph).start() 
+
+# The first time the igraph must be updated "manually". Then, the Timer, updates it every 5 minutes.
 update_igraph()
 
 
