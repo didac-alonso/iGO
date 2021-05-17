@@ -96,7 +96,7 @@ def go(update, context):
         print("---Error in /go query---")
         context.bot.send_message(chat_id=update.effective_chat.id, text=WARNING_GO)
 
-     # This print is for testing purposes, uncomment it in order to see when this command is being executed
+    # This print is for testing purposes, uncomment it in order to see when this command is being executed
     # print("...Command /go finished")
 
     return
@@ -122,7 +122,6 @@ def pos(update, context):
     it will save a ficticius user's location, specified by location.
     If the location given is not found or is mispelled, it notifies via message.
     '''
-    
     try:
         context.user_data['user_location'] = query_to_location("/pos", update, context)
     except:
@@ -174,21 +173,21 @@ def query_to_location(command, update, context):
 
 def update_igraph():
     '''
-    This method is called every 5 minutes in another thread in order to make the bot fluid, 
+    This method is called every 5 minutes in another thread in order to make the bot fluid,
     while the igraph is updating. It updates the igraph with the newest highways and congestions information.
     '''
     # This print is for testing purposes, uncomment it in order to see when this command is being executed
     # print("Updating the igraph")
     global iGRAPH
-    
+
     iGRAPH = get_igraph(GRAPH)
-    
+
     # This print is for testing purposes, uncomment it in order to see when this command is being executed
     # print("Igraph updated")
 
     # This commands sets a task that will be executed in background every 5 minutes. The task is the method itself,
     # so it will update the graph every 5 minutes.
-    Timer(WAIT_TIME_SECONDS, update_igraph).start() 
+    Timer(WAIT_TIME_SECONDS, update_igraph).start()
 
 # The first time the igraph must be updated "manually". Then, the Timer, updates it every 5 minutes.
 update_igraph()
