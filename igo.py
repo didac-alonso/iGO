@@ -130,7 +130,7 @@ def get_initial_itime(graph):
     Note that the itime calculated in this method is not the final itime, it does not take into account
     the congestions.
     Input: Networkx MultiDiGraph (OSmnx Graph) graph.
-    No output 
+    No output
     Prec: The graph must not be empty.
     '''
     nx.set_edge_attributes(graph, 0, 'itime')
@@ -218,7 +218,7 @@ def get_shortest_path_with_itimes(igraph, origin, destination):
            '''
 
     # This print is for testing purposes, uncomment it to see when the shortest path begins.
-    #print("Shortest path beginning...")
+    # print("Shortest path beginning...")
 
     route_map = StaticMap(SIZE, SIZE)
     # We convert the (latitude, longitude) format into an ID of a node in the igraph
@@ -267,12 +267,12 @@ def get_lat_lon(query):
 
 def get_location_image(lat_lon):
     '''
-    Given a location, specified by lattitude and longitude, generates a PNG 
-    image of that location in the map, which is saved using a random number as a filename. 
-    Input: 
+    Given a location, specified by lattitude and longitude, generates a PNG
+    image of that location in the map, which is saved using a random number as a filename.
+    Input:
            - A lattitude, longitude pair.
     Output:
-           - Filename of the generated image: temp random number 
+           - Filename of the generated image: temp random number
     '''
     lat, lon = lat_lon
 
@@ -281,13 +281,13 @@ def get_location_image(lat_lon):
     # Add the marker to the given location
     user_map.add_marker(CircleMarker((lon, lat), 'white', 24))
     user_map.add_marker(CircleMarker((lon, lat), 'red', 18))
-    
+
     # Generates and saves the image, as it will be a temporary
     # file it recieves a distinctive name.
     image = user_map.render()
     image_filename = "temp%d.png" % random.randint(1000000, 9999999)
     image.save(image_filename)
-    
+
     return image_filename
 
 
