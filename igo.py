@@ -254,7 +254,7 @@ def get_shortest_path_with_itimes(igraph, origin, destination):
     # We approximate the distance of the path
     distance = sum([igraph[route[i]][route[i+1]][0]['length'] for i in range(len(route)-1)])
 
-    print("...Shortest path finished")
+    # print("...Shortest path finished")
 
     return image_filename, aprox_time, round(distance, 1)
 

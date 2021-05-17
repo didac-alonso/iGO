@@ -166,7 +166,7 @@ def query_to_location(command, update, context):
         # we delete the command from the whole message given by the user
         lat, lon = get_lat_lon(update.message.text.replace(command, ""))
 
-    print("...query converted")
+    # print("...query converted")
 
     return lat, lon
 
