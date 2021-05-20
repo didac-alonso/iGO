@@ -6,10 +6,7 @@ import random
 import osmnx as ox
 from staticmap import StaticMap, Line, CircleMarker
 import pandas as pd
-import collections
 
-Highway = collections.namedtuple('Highway', 'coordinates')  # Tram
-Congestion = collections.namedtuple('Congestion', 'coordinates')
 
 # We define the map constants and parameters
 PLACE = 'Barcelona, Catalonia'
@@ -118,20 +115,13 @@ def get_igraph(graph):
     return build_igraph(graph, highways, congestions)
 
 
-# def download_highways(url):
-#    '''Downloads the information concerning the fastest streets of the city
-#    The method returns a DataFrame'''
- #   df = pd.read_csv(url, usecols=['Tram', 'Descripció', 'Coordenades'])
-  #  return df
-
-
 def get_initial_itime(graph):
     '''Given a graph, creates a new attribute, itime (in seconds), with the optimal time for each edge.
     Note that the itime calculated in this method is not the final itime, it does not take into account
     the congestions.
     Input: Networkx MultiDiGraph (OSmnx Graph) graph.
     No output
-    Prec: The graph must not be empty.
+    Prec: The graph must not be empty. //Are we sure this is true?
     '''
     nx.set_edge_attributes(graph, 0, 'itime')
     for u, v, attr in graph.edges(data=True):

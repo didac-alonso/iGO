@@ -14,6 +14,8 @@ HELP = '''This is what I can do for you! Type:
 /author: To know about my fantastic parents.
 /go destination: Get the fastest route from your current location to the given destination (make sure its precise for both of them)
                  using the concept of itime, which takes into account the congestions of the city.
+                 Please make sure you give the correct and precise name of the place you want to go (as an address) or using coordinates.
+                 IMPORTANT: in the case of coordinates, give them in the order latitude, longitude.
                  For example, try:
                      /go Sagrada Familia
                      /go 41.4036047312297, 2.174364514974909
@@ -122,6 +124,7 @@ def pos(update, context):
     it will save a ficticius user's location, specified by location.
     If the location given is not found or is mispelled, it notifies via message.
     '''
+
     try:
         context.user_data['user_location'] = query_to_location("/pos", update, context)
     except:
@@ -188,6 +191,7 @@ def update_igraph():
     # This commands sets a task that will be executed in background every 5 minutes. The task is the method itself,
     # so it will update the graph every 5 minutes.
     Timer(WAIT_TIME_SECONDS, update_igraph).start()
+
 
 # The first time the igraph must be updated "manually". Then, the Timer, updates it every 5 minutes.
 update_igraph()
