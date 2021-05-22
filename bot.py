@@ -80,7 +80,8 @@ def go(update, context):
         user_lat, user_lon = context.user_data['user_location']
     except:
         context.bot.send_message(chat_id=update.effective_chat.id, text=MISSING_USER_LOC)
-        assert False, "Missing current user location on command /go"
+        print("Missing current user location on command /go")
+        return
 
     try:
         lat, lon = query_to_location("/go", update, context)
