@@ -75,9 +75,15 @@ def go(update, context):
     # This print is for testing purposes, uncomment it in order to see when this command is being executed
     # print("Starting command /go...")
 
+    # Check we have the current user location
+    try:
+        user_lat, user_lon = context.user_data['user_location']
+    except:
+        context.bot.send_message(chat_id=update.effective_chat.id, text=MISSING_USER_LOC)
+        assert False, "Missing current user location on command /go"
+
     try:
         lat, lon = query_to_location("/go", update, context)
-        user_lat, user_lon = context.user_data['user_location']
         path_image, aprox_time, distance = get_shortest_path_with_itimes(iGRAPH,
                                                                          (user_lat, user_lon),
                                                                          (lat, lon))
@@ -178,6 +184,7 @@ def query_to_location(command, update, context):
     command += " "
 
     query = context.args
+    
     assert query != [], "You haven't given a location"
 
     try:  # if the string given is in the format (latitude, longitude)
