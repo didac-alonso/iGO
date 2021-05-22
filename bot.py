@@ -1,14 +1,15 @@
 from igo import *
 from threading import Timer
-# importa l'API de Telegram
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import os
 from datetime import datetime
 
 
-#   Messages sent by the bot
+# Messages sent by the bot
 START = '''Hi there! I'm iGo DJ, your favorite GPS from Barcelona (Spain)! 🤠
-Type or press /help to get more information about what I can do 👌'''
+Type or press /help to get more information about what I can do 👌
+Please send us your location first, to do so you can press the safety pin icon and select the location.'''
+
 HELP = '''This is what I can do for you! Type:
 /start: To get a warm welcome from me 😘
 /author: To know about my fantastic parents.
@@ -19,6 +20,7 @@ HELP = '''This is what I can do for you! Type:
                  For example, try:
                      /go Sagrada Familia
                      /go 41.4036047312297, 2.174364514974909
+                 The map sent has a red marker at your current location and a green one at your destination.
 /where: Shows your current location'''
 AUTHORS = "Authors of iGo DJ: Dídac Alonso López & Jacinto Suñer Soler"
 
@@ -43,22 +45,26 @@ dispatcher = updater.dispatcher
 
 
 def start(update, context):
-    '''Gives a warm welcome to the user.'''
+    '''
+    Gives a warm welcome to the user and gives him further instructions such
+    as sending his location before using any functionality.
+    '''
     context.bot.send_message(chat_id=update.effective_chat.id, text=START)
 
 
 def help(update, context):
-    '''Explains what the bot can do for the customer.'''
+    '''Explains what the bot can do for the user.'''
     context.bot.send_message(chat_id=update.effective_chat.id, text=HELP)
 
 
 def author(update, context):
-    '''Shows to the costumer the authors of the bot'''
+    '''Shows to the user the authors of the bot.'''
     context.bot.send_message(chat_id=update.effective_chat.id, text=AUTHORS)
 
 
 def go(update, context):
-    '''Given the command /go followed by a destination, either in the format of an address or with the coordinates,
+    '''
+    Given the command /go followed by a destination, either in the format of an address or with the coordinates,
     returns information about the shortest path from the user's current location to the given destination.
     More precisely, the bot sends:
     1) An image with the route the costumer has to follow.
@@ -94,6 +100,10 @@ def go(update, context):
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  text=f"Distance: {round(distance/1000, 1)} km")
 
+        # Gives further information about the colors of the map
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text=f"The origin is the red circle, whereas the destination is green.")
+
     except:
         print("---Error in /go query---")
         context.bot.send_message(chat_id=update.effective_chat.id, text=WARNING_GO)
@@ -106,13 +116,16 @@ def go(update, context):
 
 def where(update, context):
     '''
-    Given the command /where, sends an image of the current user's location in the map.
-    If the user has not give its location it sends an error message to the user.
+    Sends an image of the current user's location in the map.
+    If the user has not given its location it sends an error message to the user.
     '''
     try:
         image_filename = get_location_image(context.user_data['user_location'])
+
+        # Sends picture of the location and deletes it from the directory
         context.bot.send_photo(chat_id=update.effective_chat.id, photo=open(image_filename, 'rb'))
         os.remove(image_filename)
+
     except:
         context.bot.send_message(chat_id=update.effective_chat.id, text=MISSING_USER_LOC)
     return
@@ -121,54 +134,61 @@ def where(update, context):
 def pos(update, context):
     '''
     This method is for testing purposes, is called sending /pos location to the bot,
-    it will save a ficticius user's location, specified by location.
-    If the location given is not found or is mispelled, it notifies via message.
+    it will save a fictitious user's location, specified by location.
+    If the location given is not found or is mispelled, it notifies an error via python terminal.
     '''
 
     try:
         context.user_data['user_location'] = query_to_location("/pos", update, context)
     except:
-        print("Error with the position")
+        print("Error with the position given by command /pos")
     return
 
 
 def user_location(update, context):
     '''
-    This method is called every time the user sends a new location, is adapted to work
-    with static and dynamic location. It saves the user location.
+    This method is called every time the user sends a new location. It is adapted to work
+    with static and dynamic location and it saves it.
     '''
 
-    # takes the message of the user, and if its dynamic, the updates are considered
-    # as edition of the message
+    # Takes the message of the user.
+    # If its dynamic, the updates are considered as an edition of the message.
     message = update.edited_message if update.edited_message else update.message
-    # takes the localization from the message and saves it.
+
+    # Takes the location from the message and saves it.
     context.user_data['user_location'] = message.location.latitude, message.location.longitude
 
 
 def filter_coordinates(x):
-    '''Filters the given string from unnecesary characters'''
+    '''Filters the given string from unnecesary characters.'''
     for c in "()*,-+'/":
         x = x.replace(c, "")
     return x
 
 
 def query_to_location(command, update, context):
-    '''Converts the given location by the user into a tuple of coordinates (latitude, lontitude).
-       The command can be "/go", "/pos", or another one if it uses this method'''
+    '''
+    Converts the given location by the user into a tuple of coordinates (latitude, longitude).
+    The command can be "/go", "/pos", or another one if it uses this method.
+    '''
 
     # This print is for testing purposes, uncomment it in order to see when this command is being executed
     # print("Converting query to location...")
 
     command += " "
 
+    query = context.args
+    assert query != [], "You haven't given a location"
+
     try:  # if the string given is in the format (latitude, longitude)
-        query = context.args
         query = list(map(lambda x: filter_coordinates(x), query))
         lat, lon = float(query[0]), float(query[1])
-    except:  # the string given is a query
-        # we delete the command from the whole message given by the user
+
+    except:  # if the string given is a query
+        # the command is deleted from the whole message given by the user
         lat, lon = get_lat_lon(update.message.text.replace(command, ""))
 
+    # This print is for testing purposes, uncomment it in order to see when this command is being executed
     # print("...query converted")
 
     return lat, lon
@@ -176,11 +196,12 @@ def query_to_location(command, update, context):
 
 def update_igraph():
     '''
-    This method is called every 5 minutes in another thread in order to make the bot fluid,
-    while the igraph is updating. It updates the igraph with the newest highways and congestions information.
+    This method is called every 5 minutes in another thread in order to make the bot fluid while the
+    igraph is updating. It updates the igraph with the newest highways and congestions information.
     '''
     # This print is for testing purposes, uncomment it in order to see when this command is being executed
     # print("Updating the igraph")
+
     global iGRAPH
 
     iGRAPH = get_igraph(GRAPH)
@@ -197,8 +218,8 @@ def update_igraph():
 update_igraph()
 
 
-# Indicates that the bot will execute the specified methods (second parameter)
-# when it recieves the message /command (first parameter).
+# Indicates the bot will execute the specified methods (second parameter)
+# when it receives the message /command (first parameter)
 dispatcher.add_handler(CommandHandler('start', start))
 
 dispatcher.add_handler(CommandHandler('help', help))
@@ -211,13 +232,9 @@ dispatcher.add_handler(CommandHandler('where', where))
 
 dispatcher.add_handler(CommandHandler('pos', pos))
 
-# Indicates that the bot must execute user_location method when it recieves a location
+# Indicates the bot must execute user_location method when it receives a location
 dispatcher.add_handler(MessageHandler(Filters.location, user_location))
 
 
-# turn on the bot
+# turns on the bot
 updater.start_polling()
-
-
-def main():
-    pass
