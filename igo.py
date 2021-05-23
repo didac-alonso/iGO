@@ -378,3 +378,14 @@ def plot_congestions(highways, congestions, image_filename, size):
 
     image = place_map.render()
     image.save(image_filename)  # we save the image into our directory
+
+
+# See the results of download_highways, download_congestions
+# def main():
+#    highways = download_highways(HIGHWAYS_URL)
+#    congestions = download_congestions(CONGESTIONS_URL)
+#    plot_highways(highways, 'highways.png', SIZE)
+#    plot_congestions(highways, congestions, 'congestions.png', SIZE)
+#
+# if __name__ == "__main__":
+#    main()
