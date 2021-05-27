@@ -194,7 +194,11 @@ def query_to_location(command, update, context):
 
     except:  # if the string given is a query
         # the command is deleted from the whole message given by the user
-        lat, lon = get_lat_lon(update.message.text.replace(command, ""))
+        # the string is concatenated using , Barcelona, to make sure the 
+        # location given is in Barcelona
+        location = update.message.text.replace(command, "")
+        location += ', Barcelona'
+        lat, lon = get_lat_lon(location)
 
     # This print is for testing purposes, uncomment it in order to see when this command is being executed
     # print("...query converted")
