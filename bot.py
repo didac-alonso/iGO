@@ -192,8 +192,9 @@ def query_to_location(command, update, context):
         lat, lon = float(query[0]), float(query[1])
 
     except:  # if the string given is a query
-        # the command is deleted from the whole message given by the user
-        lat, lon = get_lat_lon(update.message.text.replace(command, "") + " " + PLACE)
+        # the command is deleted from the whole message given by the user,
+        # and we make sure the address is from PLACE (see global variable in igo module).
+        lat, lon = get_lat_lon(update.message.text.replace(command, "") + ", " + PLACE)
 
     # This print is for testing purposes, uncomment it in order to see when this command is being executed
     # print("...query converted")
