@@ -306,11 +306,14 @@ def get_location_image(lat_lon):
 
 
 def plot_graph(graph):
-    '''Plots the given MultiDiGraph graph.'''
-    try:
-        fig, ax = ox.plot.plot_graph(graph)
-    except:
-        pass
+    '''
+    Plots the given MultiDiGraph graph, and saves the image in the file barcelona_graph.png
+    We need to save the image because of a known issue with windows users, who can't see the plot directly
+
+    Prec: The graph must be not empty
+    '''
+    fig, ax = ox.plot_graph(graph, show=True, save=True, filepath='barcelona_graph.png')
+
 
 
 def plot_highways(highways, image_filename, size):
@@ -381,11 +384,14 @@ def plot_congestions(highways, congestions, image_filename, size):
 
 
 # See the results of download_highways, download_congestions
-# def main():
+def main():
+#    graph = get_graph()
+#    plot_graph(graph)
 #    highways = download_highways(HIGHWAYS_URL)
 #    congestions = download_congestions(CONGESTIONS_URL)
 #    plot_highways(highways, 'highways.png', SIZE)
 #    plot_congestions(highways, congestions, 'congestions.png', SIZE)
 #
 # if __name__ == "__main__":
-#    main()
+
+# main()
