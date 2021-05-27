@@ -33,7 +33,6 @@ Please send us your location before using /go or /where, to do so you can press 
 
 WAIT_TIME_SECONDS = 300  # number of seconds between each update of the igraph
 
-
 # Global variables
 GRAPH = get_graph()
 iGRAPH = None
@@ -185,7 +184,7 @@ def query_to_location(command, update, context):
     command += " "
 
     query = context.args
-    
+
     assert query != [], "You haven't given a location"
 
     try:  # if the string given is in the format (latitude, longitude)
@@ -194,11 +193,7 @@ def query_to_location(command, update, context):
 
     except:  # if the string given is a query
         # the command is deleted from the whole message given by the user
-        # the string is concatenated using , Barcelona, to make sure the 
-        # location given is in Barcelona
-        location = update.message.text.replace(command, "")
-        location += ', Barcelona'
-        lat, lon = get_lat_lon(location)
+        lat, lon = get_lat_lon(update.message.text.replace(command, "") + " " + PLACE)
 
     # This print is for testing purposes, uncomment it in order to see when this command is being executed
     # print("...query converted")
