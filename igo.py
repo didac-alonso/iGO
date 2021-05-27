@@ -384,7 +384,7 @@ def plot_congestions(highways, congestions, image_filename, size):
 
 
 # See the results of download_highways, download_congestions
-def main():
+# def main():
 #    graph = get_graph()
 #    plot_graph(graph)
 #    highways = download_highways(HIGHWAYS_URL)
