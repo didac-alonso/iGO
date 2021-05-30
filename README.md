@@ -34,7 +34,7 @@ It also incorporates some methods to visualize in a map the data given from OSMn
 
 The main library used in this module is OSMnx. It is used to extract the graph from Barcelona in OpenStreetMap, incorporate the new attribute itime into the graph and get the shortest path using the latter, among others.
 
-The attribute itime is created by merging the *maxspeed* and the *length* of each edge in the graph (given by Osmnx) and the *level of congestion* given by the local government. Nonetheless, traffic data is not available for all the streets in the graph. For these cases, itime is the optimal time for that given street. Moreover, some streets in the graph lack of maxspeed data. In this case, we have adjusted the speed to the actual regulations and to what we thought would make sense depending on the length of the street (see get_initial_itime method).
+The attribute itime is created by merging the *maxspeed* and the *length* of each edge in the graph (given by Osmnx) and the *level of congestion* given by the local government. Nonetheless, traffic data is not available for all the streets in the graph. For these cases, itime is the optimal time for that given street. Moreover, some streets in the graph lack of maxspeed data. In this case, we have adjusted the speed to the actual regulations and to what we thought and found was the best fit depending on the length of the street (see get_initial_itime method).
 
 Time multiplier is chosen by us: we use a fibonacci-like series, considering that the time taken for one congestion is the sum of the two times taken by the next lighter states.
 
