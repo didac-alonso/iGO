@@ -219,7 +219,6 @@ def get_shortest_path_with_itimes(igraph, origin, destination):
            - destination (has to be in the format (latitude, longitude)).
     Output:
            - image_filename: name of the file in which the path is plotted.
-           - aprox_time: approximate time from the given origin to the given destination.
            - distance: approximate distance from the given origin to the given destination.
     Prec:
            - the igraph given must have an attribute called "itime".
@@ -257,17 +256,13 @@ def get_shortest_path_with_itimes(igraph, origin, destination):
     image_filename = "temp%d.png" % random.randint(1000000, 9999999)
     image.save(image_filename)
 
-    # We approximate the duration of the path
-    aprox_time = sum([igraph[route[i]][route[i+1]][0]['itime'] for i in range(len(route)-1)])
-    aprox_time = datetime.timedelta(seconds=int(aprox_time))
-
     # We approximate the distance of the path
     distance = sum([igraph[route[i]][route[i+1]][0]['length'] for i in range(len(route)-1)])
 
     # This print is for testing purposes, uncomment it to see when the shortest path ends.
     # print("...Shortest path finished")
 
-    return image_filename, aprox_time, round(distance, 1)
+    return image_filename, round(distance, 1)
 
 
 def get_lat_lon(query):
@@ -313,7 +308,6 @@ def plot_graph(graph):
     Prec: The graph must be not empty
     '''
     fig, ax = ox.plot_graph(graph, show=True, save=True, filepath='barcelona_graph.png')
-
 
 
 def plot_highways(highways, image_filename, size):

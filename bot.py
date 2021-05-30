@@ -84,24 +84,14 @@ def go(update, context):
 
     try:
         lat, lon = query_to_location("/go", update, context)
-        path_image, aprox_time, distance = get_shortest_path_with_itimes(iGRAPH,
-                                                                         (user_lat, user_lon),
-                                                                         (lat, lon))
+        path_image, distance = get_shortest_path_with_itimes(iGRAPH,
+                                                             (user_lat, user_lon),
+                                                             (lat, lon))
 
         # Sends picture of the path and deletes it from the directory
         context.bot.send_photo(chat_id=update.effective_chat.id, photo=open(path_image, 'rb'))
         os.remove(path_image)
 
-        # Gives the estimate time
-        context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text="Estimated time: " + str(aprox_time))
-
-        # Gives the estimate time arrival
-        aprox_arrival = datetime.now() + aprox_time
-        context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text="Estimated time arrival: {:d}:{:02d}:{:02d}".format(aprox_arrival.hour,
-                                                                                          aprox_arrival.minute,
-                                                                                          aprox_arrival.second))
         # Gives the distance to the destination
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  text=f"Distance: {round(distance/1000, 1)} km")
