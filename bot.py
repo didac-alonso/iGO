@@ -2,6 +2,7 @@ from igo import *
 from threading import Timer
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import os
+from datetime import datetime
 
 # Messages sent by the bot
 START = '''Hi there! I'm iGo DJ, your favorite GPS from Barcelona (Spain)! 🤠
@@ -73,7 +74,9 @@ def go(update, context):
     returns information about the shortest path from the user's current location to the given destination.
     More precisely, the bot sends:
     1) An image with the route the costumer has to follow.
-    2) The estimate distance from one place to another.
+    2) The estimate time it takes to get to the destination.
+    3) The estimate time arrival.
+    4) The estimate distance from one place to another.
     '''
     # This print is for testing purposes, uncomment it in order to see when this command is being executed
     # print("Starting command /go...")
@@ -88,29 +91,43 @@ def go(update, context):
 
     try:
         lat, lon = query_to_location("/go", update, context)
-        path_image, distance = get_shortest_path_with_itimes(iGRAPH,
-                                                             (user_lat, user_lon),
-                                                             (lat, lon))
-
-        # Sends picture of the path and deletes it from the directory
-        context.bot.send_photo(chat_id=update.effective_chat.id, photo=open(path_image, 'rb'))
-        os.remove(path_image)
-
-        # Gives the distance to the destination
-        context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text=f"Distance: {round(distance/1000, 1)} km")
-
-        # Gives further information about the colors of the map
-        context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text=f"Origin          ➡️ {ORIGIN_COLOR} \nDestination ➡️ {DESTINATION_COLOR}")
-
+        path_image, aprox_time, distance = get_shortest_path_with_itimes(iGRAPH,
+                                                                         (user_lat, user_lon),
+                                                                         (lat, lon))
     except:
         print("---Error in /go query---")
         context.bot.send_message(chat_id=update.effective_chat.id, text=WARNING_GO)
+        return
+
+    # Sends picture of the path and deletes it from the directory
+    context.bot.send_photo(chat_id=update.effective_chat.id, photo=open(path_image, 'rb'))
+    os.remove(path_image)
+
+    # Gives the estimate time
+    if aprox_time.seconds//3600 == 0:  # estimate time is less than an hour
+        str_aprox_time = "Estimated time: {:d} minutes".format(aprox_time.seconds//60)
+    else:
+        str_aprox_time = "Estimated time: {:d} hours and {:02d} minutes".format(aprox_time.seconds//3600,
+                                                                                aprox_time.seconds//60)
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text=str_aprox_time)
+
+    # Gives the estimate time arrival
+    aprox_arrival = datetime.now() + aprox_time
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text="Estimated time arrival: {:d}:{:02d}".format(aprox_arrival.hour,
+                                                                               aprox_arrival.minute))
+
+    # Gives the distance to the destination
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text=f"Distance: {round(distance/1000, 1)} km")
+
+    # Gives further information about the colors of the map
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text=f"Origin          ➡️ {ORIGIN_COLOR} \nDestination ➡️ {DESTINATION_COLOR}")
 
     # This print is for testing purposes, uncomment it in order to see when this command is being executed
     # print("...Command /go finished")
-
     return
 
 
@@ -123,7 +140,8 @@ def where(update, context):
         image_filename = get_location_image(context.user_data['user_location'])
 
         # Sends picture of the location and deletes it from the directory
-        context.bot.send_photo(chat_id=update.effective_chat.id, photo=open(image_filename, 'rb'))
+        context.bot.send_photo(chat_id=update.effective_chat.id,
+                               photo=open(image_filename, 'rb'))
         os.remove(image_filename)
 
     except:
