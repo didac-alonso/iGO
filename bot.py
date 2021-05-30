@@ -2,8 +2,6 @@ from igo import *
 from threading import Timer
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import os
-from datetime import datetime
-
 
 # Messages sent by the bot
 START = '''Hi there! I'm iGo DJ, your favorite GPS from Barcelona (Spain)! 🤠

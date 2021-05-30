@@ -1,6 +1,5 @@
 import os
 import pickle
-import datetime
 import networkx as nx
 import random
 import osmnx as ox
