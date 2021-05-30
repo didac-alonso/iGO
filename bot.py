@@ -67,9 +67,7 @@ def go(update, context):
     returns information about the shortest path from the user's current location to the given destination.
     More precisely, the bot sends:
     1) An image with the route the costumer has to follow.
-    2) The estimate time it takes to get to the destination.
-    3) The estimate time arrival.
-    4) The estimate distance from one place to another.
+    2) The estimate distance from one place to another.
     '''
     # This print is for testing purposes, uncomment it in order to see when this command is being executed
     # print("Starting command /go...")
