@@ -11,16 +11,24 @@ Type or press /help to get more information about what I can do 👌
 Please send us your location first, to do so you can press the safety pin icon and select the location.'''
 
 HELP = '''This is what I can do for you! Type:
-/start: To get a warm welcome from me 😘
-/author: To know about my fantastic parents.
-/go destination: Get the fastest route from your current location to the given destination (make sure its precise for both of them)
-                 using the concept of itime, which takes into account the congestions of the city.
-                 Please make sure you give the correct and precise name of the place you want to go (as an address) or using coordinates.
-                 IMPORTANT: in the case of coordinates, give them in the order latitude, longitude.
-                 For example, try:
-                     /go Sagrada Familia
-                     /go 41.4036047312297, 2.174364514974909
-                 The map sent has a red marker at your current location and a green one at your destination.
+
+/start:
+To get a warm welcome from me 😘
+
+/author:
+To know about my fantastic parents.
+
+/go destination:
+Get the fastest route from your current location
+to the given destination (make sure its precise for both of them)
+using the concept of itime, which takes into account the congestions of the city.
+
+Please make sure you give the correct and precise name of the place you want to go (as an address) or using coordinates.
+IMPORTANT: in the case of coordinates, give them in the order latitude, longitude.
+           For example, try:
+           /go Sagrada Familia
+           /go 41.4036047312297, 2.174364514974909
+
 /where: Shows your current location'''
 AUTHORS = "Authors of iGo DJ: Dídac Alonso López & Jacinto Suñer Soler"
 
@@ -96,7 +104,7 @@ def go(update, context):
 
         # Gives further information about the colors of the map
         context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text=f"Origin          --> {ORIGIN_COLOR} \nDestination --> {DESTINATION_COLOR}")
+                                 text=f"Origin          ➡️ {ORIGIN_COLOR} \nDestination ➡️ {DESTINATION_COLOR}")
 
     except:
         print("---Error in /go query---")
