@@ -18,6 +18,9 @@ HIGHWAYS_URL = 'https://opendata-ajuntament.barcelona.cat/data/dataset/1090983a-
 CONGESTIONS_URL = 'https://opendata-ajuntament.barcelona.cat/data/dataset/8319c2b1-4c21-4962-9acd-6db4c5ff1148/resource/2d456eb5-4ea6-4f68-9794-2f3f1a58a933/download'
 COLOR_CONGESTIONS = ['silver', 'aqua', 'lime', 'orange', 'red', 'darkred', 'black']
 TIME_MULTIPLIER = [2.3, 1.5, 3.0, 4.5, 7.5, 13.0, INFINITE_TIME]
+ORIGIN_COLOR = 'red'
+DESTINATION_COLOR = 'green'
+PATH_COLOR = 'blue'
 
 
 def download_graph(place):
@@ -240,16 +243,16 @@ def get_shortest_path_with_itimes(igraph, origin, destination):
     coordinates = [[igraph.nodes[node]['x'], igraph.nodes[node]['y']] for node in route]
 
     # We add the path in the map.
-    line = Line(coordinates, 'blue', 4)
+    line = Line(coordinates, PATH_COLOR, 4)
     route_map.add_line(line)
 
     # We mark the beginning/origin of the path.
     route_map.add_marker(CircleMarker(coordinates[0], 'white', 18))
-    route_map.add_marker(CircleMarker(coordinates[0], 'red', 12))
+    route_map.add_marker(CircleMarker(coordinates[0], ORIGIN_COLOR, 12))
 
     # We mark the end/destination of the path.
     route_map.add_marker(CircleMarker(coordinates[-1], 'white', 18))
-    route_map.add_marker(CircleMarker(coordinates[-1], 'green', 12))
+    route_map.add_marker(CircleMarker(coordinates[-1], DESTINATION_COLOR, 12))
 
     # We save the image into a file
     image = route_map.render()
@@ -289,7 +292,7 @@ def get_location_image(lat_lon):
 
     # Add the marker to the given location
     user_map.add_marker(CircleMarker((lon, lat), 'white', 24))
-    user_map.add_marker(CircleMarker((lon, lat), 'red', 18))
+    user_map.add_marker(CircleMarker((lon, lat), ORIGIN_COLOR, 18))
 
     # Generates and saves the image, as it will be a temporary
     # file it receives a distinctive name.
@@ -328,7 +331,7 @@ def plot_highways(highways, image_filename, size):
         coordinates = [[coordinates[i], coordinates[i+1]] for i in range(0, len(coordinates), 2)]
 
         # we paint the section in the map
-        pol = Line(coordinates, 'blue', LINE_SIZE)
+        pol = Line(coordinates, PATH_COLOR, LINE_SIZE)
         place_map.add_line(pol)
 
     image = place_map.render()

@@ -96,7 +96,7 @@ def go(update, context):
 
         # Gives further information about the colors of the map
         context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text=f"The origin is the red circle, whereas the destination is green.")
+                                 text=f"Origin          --> {ORIGIN_COLOR} \nDestination --> {DESTINATION_COLOR}")
 
     except:
         print("---Error in /go query---")
