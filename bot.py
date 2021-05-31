@@ -28,7 +28,10 @@ IMPORTANT: in the case of coordinates, give them in the order latitude, longitud
            /go Sagrada Familia
            /go 41.4036047312297, 2.174364514974909
 
+NOTE: The estimated time might be unexact.
+
 /where: Shows your current location'''
+
 AUTHORS = "Authors of iGo DJ: Dídac Alonso López & Jacinto Suñer Soler"
 
 WARNING_GO = '''Error 💣 Please make sure you give the correct and precise name of the place you want to go or the pair latitude longitude. Here's an example:
@@ -77,6 +80,7 @@ def go(update, context):
     2) The estimate time it takes to get to the destination.
     3) The estimate time arrival.
     4) The estimate distance from one place to another.
+    NOTE: The estimated time might be unexact.
     '''
     # This print is for testing purposes, uncomment it in order to see when this command is being executed
     # print("Starting command /go...")
