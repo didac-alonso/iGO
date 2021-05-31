@@ -28,9 +28,9 @@ Make sure you have Python3 installed in your computer.
 
 ## iGo module
 
-This module integrates all the funcionalities concerning the Barcelona map and its traffic. Its goal is to get both information and merge them into one unique graph where the notion of itime (smart time) is calculated. Moreover, once this is done, its mission is to help the Bot module with tasks like finding the shortest path from an origin to a destination or showing the current location of the user.
+This module integrates all the functionalities concerning the Barcelona map and its traffic. Its goal is to get both information and merge them into one unique graph where the notion of itime (smart time) is calculated. Moreover, once this is done, its mission is to help the Bot module with tasks like finding the shortest path from an origin to a destination or showing the current location of the user.
 
-It also incorporates some methods to visualize in a map the data given from OSMnx (the graph of Barcelona) and the local government: that is, the traffic in Barcelona and the streets where the local government monitors congestions (sometimes, no data can be given).
+It also incorporates some methods to visualise in a map the data given from OSMnx (the graph of Barcelona) and the local government: that is, the traffic in Barcelona and the streets where the local government monitors congestions (sometimes, no data can be given).
 
 The main library used in this module is OSMnx. It is used to extract the graph from Barcelona in OpenStreetMap, incorporate the new attribute itime into the graph and get the shortest path using the latter, among others.
 
@@ -45,14 +45,14 @@ These are the main methods it incorporates:
 ```python
 import igo
 
-igo.get_graph() # returns the barcelona graph, saving it previously, or loads it in case that was saved before.
+igo.get_graph() # returns the Barcelona graph, saving it previously, or loads it in case that was saved before.
 igo.get_igraph(graph) # returns the igraph, which is the graph with extra parameter called itime.
 igo.get_shortest_path_with_itimes(igraph, origin, destination) # Returns an image, the approximate time and the distance of the shortest path using the concept of itime
 igo.get_lat_lon(place) # returns the coordinates from the place specified
 igo.get_location_image(lat_lon) # saves an image of the map with the location given marked, and returns its name, since it is random
 igo.plot_graph(graph) # plots the given OSMnx graph
 igo.plot_highways(highways, image_filename, size) # saves an image of the map with the highways drawn
-igo.plot_congestions(highways, congestions, image_filename, size) # saves an image of the map with the congestions marked in different colors
+igo.plot_congestions(highways, congestions, image_filename, size) # saves an image of the map with the congestions marked in different colours
 ```
 
 To get more information about what each method does, simply write the following lines in a python console in the directory where the igo.py is located:
